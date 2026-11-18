@@ -124,7 +124,7 @@ export default function Projects() {
         <div className="mx-auto max-w-6xl px-6">
           <Reveal>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Projects<span className="text-accent">.</span>
+              Project Files<span className="text-accent">.</span>
             </h2>
             <p className="mt-3 text-foreground/60">
               <span className="hidden sm:inline">Hover a file to peek inside, click to open it. Slide the shelf for more.</span>
