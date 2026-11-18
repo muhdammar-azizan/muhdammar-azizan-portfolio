@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { navItems, siteConfig } from "@/lib/site";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  // Link currently under the mouse (or keyboard focus), used for the glass hover pill.
+  const [hovered, setHovered] = useState<string | null>(null);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-foreground/10 bg-background/80 font-clash backdrop-blur">
@@ -16,11 +19,28 @@ export default function Navbar() {
           <span className="text-accent">.</span>
         </a>
 
-        {/* Desktop links */}
-        <ul className="hidden gap-8 text-base font-medium md:flex">
+        {/* Desktop links. A glass pill slides to whichever link is hovered or focused. */}
+        <ul
+          className="hidden gap-1 text-base font-medium md:flex"
+          onMouseLeave={() => setHovered(null)}
+        >
           {navItems.map((item) => (
-            <li key={item.href}>
-              <a href={item.href} className="text-foreground/70 transition hover:text-accent">
+            <li key={item.href} className="relative">
+              {hovered === item.href && (
+                <motion.span
+                  layoutId="nav-glass"
+                  aria-hidden="true"
+                  className="nav-glass absolute inset-0 rounded-full"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              <a
+                href={item.href}
+                onMouseEnter={() => setHovered(item.href)}
+                onFocus={() => setHovered(item.href)}
+                onBlur={() => setHovered(null)}
+                className="relative block rounded-full px-4 py-2 text-foreground/70 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none"
+              >
                 {item.label}
               </a>
             </li>
