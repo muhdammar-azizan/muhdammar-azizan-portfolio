@@ -65,13 +65,22 @@ export const viewport: Viewport = {
   ],
 };
 
-// Runs before first paint so the saved theme is applied without a flash.
+// Runs before first paint so the saved theme is applied without a flash,
+// and decides whether the opening intro plays (once per tab, never with reduced motion).
 const themeScript = `
+var root = document.documentElement;
 try {
   var saved = localStorage.getItem("theme");
-  document.documentElement.dataset.theme = saved === "dark" ? "dark" : "light";
+  root.dataset.theme = saved === "dark" ? "dark" : "light";
 } catch (e) {
-  document.documentElement.dataset.theme = "light";
+  root.dataset.theme = "light";
+}
+try {
+  var seen = sessionStorage.getItem("intro-seen");
+  var calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  root.dataset.intro = seen || calm ? "done" : "play";
+} catch (e) {
+  root.dataset.intro = "done";
 }
 `;
 

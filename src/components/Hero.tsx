@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import FlipPortrait from "./FlipPortrait";
+import GlyphWord from "./intro/GlyphWord";
 import { siteConfig } from "@/lib/site";
 
 // Each line of text fades up one after another.
@@ -19,11 +20,14 @@ export default function Hero() {
       <div className="mx-auto grid min-h-screen max-w-[max(72rem,80vw)] items-center gap-12 px-6 pb-12 pt-28 lg:grid-cols-2 lg:gap-[max(3rem,4vw)]">
         {/* Left column: short introduction */}
         <div className="order-2 text-center lg:order-1 lg:text-left">
+          {/* Drawn from the font outlines so the intro can morph "Portfolio" into it letter by letter */}
           <motion.p
             {...fadeUp(0.1)}
-            className="font-relieve text-5xl text-accent sm:text-6xl lg:text-[max(3.75rem,4.3vw)]"
+            data-hello-word
+            className="text-5xl leading-none text-accent sm:text-6xl lg:text-[max(3.75rem,4.3vw)]"
           >
-            Hello
+            <span className="sr-only">Hello</span>
+            <GlyphWord word="Hello" />
           </motion.p>
           <motion.h1
             {...fadeUp(0.25)}

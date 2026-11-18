@@ -39,7 +39,8 @@ export type ProjectPage =
   // A printed screenshot of the system (16:10 image inside /public/images/projects).
   | { kind: "screenshot"; src: string; caption: string }
   // Handwritten-style notes on lined paper.
-  | { kind: "notes"; heading: string; paragraphs?: string[]; points?: string[] }
+  // `tech` adds a "Built with" row of sketched logos (names are matched in src/lib/tech.ts).
+  | { kind: "notes"; heading: string; paragraphs?: string[]; points?: string[]; tech?: string[] }
   // Handwritten note with links to every contact channel in siteConfig.contact.
   | { kind: "contact"; heading: string; paragraphs?: string[] };
 
@@ -83,7 +84,8 @@ export const projects: Project[] = [
       {
         kind: "notes",
         heading: "Project notes",
-        points: ["Role: Software Engineer", "Year: 2026", "Built with: Laravel, MySQL, Tailwind CSS, JavaScript"],
+        points: ["Role: Software Engineer", "Year: 2026"],
+        tech: ["Laravel", "PHP", "MySQL", "Tailwind CSS", "JavaScript"],
       },
     ],
     // TODO: confirm the live URL.
@@ -107,6 +109,7 @@ export const projects: Project[] = [
           "Watering reminders based on soil moisture",
           "Finalist at Program Jaguh Keusahawanan Nasional 2026",
         ],
+        tech: ["React", "Node.js", "Firebase", "Arduino", "IoT"],
       },
     ],
     href: "https://example.com/gardensense",
@@ -125,6 +128,7 @@ export const projects: Project[] = [
           "Placeholder: the official website of CukruDev Solutions, presenting its services, past work and an easy way for clients to get in touch.",
         ],
         points: ["Service pages for web, system and app development", "Portfolio of client projects", "Contact through WhatsApp"],
+        tech: ["Next.js", "TypeScript", "Tailwind CSS", "Vercel"],
       },
     ],
     href: "https://example.com/cukrudev",
@@ -143,6 +147,7 @@ export const projects: Project[] = [
           "Placeholder: TaskFlow lets group members split work into tasks, set deadlines and see progress at a glance, so nobody is left guessing who does what.",
         ],
         points: ["Drag and drop task board", "Deadline reminders", "Progress overview for each member"],
+        tech: ["Vue", "Express", "PostgreSQL"],
       },
     ],
     href: "https://example.com/taskflow",

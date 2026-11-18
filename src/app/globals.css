@@ -160,6 +160,23 @@ html.theme-switching *::after {
   }
 }
 
+/* ---------- Opening intro ---------- */
+
+/* The intro overlay only shows when the inline script in layout.tsx chose to play it
+   (so it never flashes for returning visitors or without JavaScript). */
+html:not([data-intro="play"]) .intro-overlay {
+  display: none;
+}
+
+/* While it plays: no scrolling, and the hero "Hello" waits for the flying letters. */
+html[data-intro="play"] {
+  overflow: hidden;
+}
+
+html[data-intro="play"] [data-hello-word] {
+  visibility: hidden;
+}
+
 /* Respect users who prefer less motion. */
 @media (prefers-reduced-motion: reduce) {
   html {

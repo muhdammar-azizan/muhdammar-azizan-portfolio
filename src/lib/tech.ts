@@ -1,0 +1,81 @@
+import {
+  siAndroid,
+  siArduino,
+  siBootstrap,
+  siCss,
+  siDart,
+  siDocker,
+  siExpress,
+  siFigma,
+  siFirebase,
+  siFlutter,
+  siGit,
+  siGithub,
+  siHtml5,
+  siJavascript,
+  siKotlin,
+  siLaravel,
+  siMongodb,
+  siMysql,
+  siNextdotjs,
+  siNodedotjs,
+  siPhp,
+  siPostgresql,
+  siPython,
+  siReact,
+  siSupabase,
+  siTailwindcss,
+  siTypescript,
+  siVercel,
+  siVuedotjs,
+  type SimpleIcon,
+} from "simple-icons";
+
+// Logos for the "Built with" part of a project file.
+// The key is the name written in site.ts (case and spaces do not matter).
+// To add a technology: import its icon from "simple-icons" (search at https://simpleicons.org)
+// and add one line here. Names without a logo still show, with a plain sketched mark.
+const ICONS: Record<string, SimpleIcon> = {
+  android: siAndroid,
+  arduino: siArduino,
+  bootstrap: siBootstrap,
+  css: siCss,
+  dart: siDart,
+  docker: siDocker,
+  express: siExpress,
+  figma: siFigma,
+  firebase: siFirebase,
+  flutter: siFlutter,
+  git: siGit,
+  github: siGithub,
+  html: siHtml5,
+  html5: siHtml5,
+  javascript: siJavascript,
+  js: siJavascript,
+  kotlin: siKotlin,
+  laravel: siLaravel,
+  mongodb: siMongodb,
+  mysql: siMysql,
+  nextjs: siNextdotjs,
+  nodejs: siNodedotjs,
+  node: siNodedotjs,
+  php: siPhp,
+  postgresql: siPostgresql,
+  postgres: siPostgresql,
+  python: siPython,
+  react: siReact,
+  supabase: siSupabase,
+  tailwindcss: siTailwindcss,
+  tailwind: siTailwindcss,
+  typescript: siTypescript,
+  ts: siTypescript,
+  vercel: siVercel,
+  vue: siVuedotjs,
+  vuejs: siVuedotjs,
+};
+
+const keyFor = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+export function techIcon(name: string): SimpleIcon | undefined {
+  return ICONS[keyFor(name)];
+}

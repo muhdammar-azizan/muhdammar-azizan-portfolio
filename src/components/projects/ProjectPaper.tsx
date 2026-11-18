@@ -6,6 +6,7 @@ import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { ArrowUpRight, ChevronLeft, ChevronRight, CodeXml, Mail, X } from "lucide-react";
 import { siteConfig, type ProjectPage, type ShelfItem } from "@/lib/site";
 import { paperLayoutId } from "./ProjectFolder";
+import SketchLogo from "./SketchLogo";
 
 const EASE = [0.32, 0.72, 0, 1] as const;
 // Slower, softer curve for the paper leaving and entering the file.
@@ -290,6 +291,16 @@ function PageContent({ page }: { page: ProjectPage }) {
             </li>
           ))}
         </ul>
+      )}
+      {page.tech && page.tech.length > 0 && (
+        <section className="mt-[var(--line)]">
+          <h4 className="text-[length:calc(var(--line)*0.62)] font-bold leading-[var(--line)] text-[#1f2a44]">Built with</h4>
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-4">
+            {page.tech.map((name) => (
+              <SketchLogo key={name} name={name} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );
