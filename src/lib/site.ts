@@ -11,6 +11,8 @@ export const siteConfig = {
   role: "Software Engineer",
   // Profile photo shown in the hero section.
   heroImage: "/images/profile-polaroid.jpg",
+  // Memoji version shown on the back of the hero photo when it is clicked.
+  heroAvatar: "/images/profile-avatar-polaroid.jpg",
   bio: [
     "Placeholder: write a short introduction about yourself here.",
     "Placeholder: add a second paragraph about your background and what drives you.",

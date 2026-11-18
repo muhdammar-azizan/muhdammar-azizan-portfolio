@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
+import FlipPortrait from "./FlipPortrait";
 import { siteConfig } from "@/lib/site";
 
 export default function Hero() {
@@ -13,21 +13,19 @@ export default function Hero() {
         {/* Left column is intentionally empty for now. */}
         <div />
 
-        {/* Right column: profile photo */}
+        {/* Right column: photo that flips to the memoji when clicked */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="flex justify-center lg:justify-end"
         >
-          <Image
-            src={siteConfig.heroImage}
-            alt={`Portrait of ${siteConfig.name}`}
+          <FlipPortrait
+            front={siteConfig.heroImage}
+            back={siteConfig.heroAvatar}
+            name={siteConfig.name}
             width={800}
             height={1096}
-            sizes="(min-width: 1024px) 420px, 80vw"
-            priority
-            className="h-auto max-h-[75vh] w-auto max-w-full rounded-sm shadow-2xl shadow-black/30"
           />
         </motion.div>
       </div>
