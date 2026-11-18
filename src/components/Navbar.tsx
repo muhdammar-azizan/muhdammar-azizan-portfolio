@@ -9,15 +9,15 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-foreground/10 bg-background/80 backdrop-blur">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-foreground/10 bg-background/80 font-clash backdrop-blur">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <a href="#top" className="font-semibold tracking-tight">
+        <a href="#top" className="text-xl font-semibold tracking-tight">
           {siteConfig.name.split(" ")[1]}
           <span className="text-accent">.</span>
         </a>
 
         {/* Desktop links */}
-        <ul className="hidden gap-8 text-sm md:flex">
+        <ul className="hidden gap-8 text-base font-medium md:flex">
           {navItems.map((item) => (
             <li key={item.href}>
               <a href={item.href} className="text-foreground/70 transition hover:text-accent">

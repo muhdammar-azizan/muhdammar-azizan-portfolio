@@ -22,6 +22,15 @@ const relieve = localFont({
   display: "swap",
 });
 
+// Clash Display variable font (ITF Free Font License: free for personal and commercial use).
+// Use it with the Tailwind class "font-clash".
+const clash = localFont({
+  src: "./fonts/ClashDisplay-Variable.woff2",
+  variable: "--font-clash",
+  weight: "200 700",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: siteConfig.title,
@@ -63,7 +72,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       data-theme="light"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${relieve.variable} scroll-smooth antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${relieve.variable} ${clash.variable} scroll-smooth antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
