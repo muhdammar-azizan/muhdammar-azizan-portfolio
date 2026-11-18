@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Kalam } from "next/font/google";
 import localFont from "next/font/local";
 import { siteConfig } from "@/lib/site";
 import "./globals.css";
@@ -28,6 +28,15 @@ const clash = localFont({
   src: "./fonts/ClashDisplay-Variable.woff2",
   variable: "--font-clash",
   weight: "200 700",
+  display: "swap",
+});
+
+// Neat handwriting font for the project notes and sticky notes (SIL Open Font License).
+// Use it with the Tailwind class "font-hand".
+const kalam = Kalam({
+  variable: "--font-kalam",
+  subsets: ["latin"],
+  weight: ["400", "700"],
   display: "swap",
 });
 
@@ -72,7 +81,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       data-theme="light"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${relieve.variable} ${clash.variable} scroll-smooth antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${relieve.variable} ${clash.variable} ${kalam.variable} scroll-smooth antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
