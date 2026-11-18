@@ -1,22 +1,100 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { AnimatePresence, LayoutGroup, MotionConfig } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  AnimatePresence,
+  LayoutGroup,
+  MotionConfig,
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  type PanInfo,
+} from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Reveal from "./Reveal";
 import ProjectFolder from "./projects/ProjectFolder";
 import ProjectPaper from "./projects/ProjectPaper";
-import { projects } from "@/lib/site";
+import { SHELF_SIZE, shelfItems } from "@/lib/site";
+
+const SLIDE_SPRING = { type: "spring", stiffness: 140, damping: 24, mass: 0.9 } as const;
 
 /**
- * Projects shown as a row of manila files.
+ * Projects shown as a row of manila files that slides left and right.
  * Hover (or first tap on phones) peeks inside a file; clicking opens its paper in the middle.
+ * Empty spots hold "Reserved for you" files with contact details.
  */
 export default function Projects() {
   const [peeked, setPeeked] = useState<number | null>(null);
   const [opened, setOpened] = useState<number | null>(null);
   const folderButtons = useRef<(HTMLButtonElement | null)[]>([]);
+  const reduceMotion = useReducedMotion();
 
+  // ---------- Sliding shelf ----------
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const trackX = useMotionValue(0);
+  const [metrics, setMetrics] = useState({ step: 1, maxShift: 0, visible: 1 });
+  const [start, setStart] = useState(0);
+  // Set while the shelf is being dragged, so letting go does not also open a file.
+  const dragged = useRef(false);
+
+  // Measure how far apart the files are and how far the shelf can slide.
+  useEffect(() => {
+    const measure = () => {
+      const viewport = viewportRef.current;
+      const track = trackRef.current;
+      const slots = track?.querySelectorAll<HTMLElement>("[data-shelf-slot]");
+      if (!viewport || !track || !slots?.length) return;
+      const first = slots[0];
+      const step = slots[1] ? slots[1].offsetLeft - first.offsetLeft : first.offsetWidth;
+      const maxShift = Math.max(0, track.scrollWidth - viewport.clientWidth);
+      const visible = Math.max(1, Math.floor((viewport.clientWidth - first.offsetLeft) / step));
+      setMetrics({ step, maxShift, visible });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (viewportRef.current) observer.observe(viewportRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const maxStart = Math.ceil(metrics.maxShift / metrics.step);
+  const clampStart = useCallback((value: number) => Math.min(Math.max(value, 0), maxStart), [maxStart]);
+  const offsetFor = useCallback(
+    (index: number) => -Math.min(index * metrics.step, metrics.maxShift),
+    [metrics.step, metrics.maxShift],
+  );
+
+  // Glide the shelf whenever the first visible file changes (or the layout is measured again).
+  useEffect(() => {
+    const controls = animate(trackX, offsetFor(clampStart(start)), reduceMotion ? { duration: 0 } : SLIDE_SPRING);
+    return () => controls.stop();
+  }, [start, clampStart, offsetFor, trackX, reduceMotion]);
+
+  const slide = (direction: number) => {
+    setPeeked(null);
+    setStart((current) => clampStart(current + direction * Math.max(1, metrics.visible - 1)));
+  };
+
+  const onDragEnd = (_: unknown, info: PanInfo) => {
+    // Snap to the nearest file, carrying a little of the throw.
+    const projected = -(trackX.get() + info.velocity.x * 0.2);
+    const next = clampStart(Math.round(projected / metrics.step));
+    setStart(next);
+    // If the start index did not change, the effect above will not run, so glide back here too.
+    animate(trackX, offsetFor(next), reduceMotion ? { duration: 0 } : SLIDE_SPRING);
+    window.setTimeout(() => (dragged.current = false), 50);
+  };
+
+  // Keyboard users tabbing to a hidden file bring it into view.
+  const ensureVisible = (index: number) => {
+    if (index < start) setStart(clampStart(index));
+    else if (index >= start + metrics.visible) setStart(clampStart(index - metrics.visible + 1));
+  };
+
+  // ---------- Peek and open ----------
   const activate = (index: number, pointerType: string) => {
+    if (dragged.current) return;
     // On touch screens the first tap only peeks, the second tap opens.
     if (pointerType === "touch" && peeked !== index) {
       setPeeked(index);
@@ -33,6 +111,12 @@ export default function Projects() {
     if (index !== null) requestAnimationFrame(() => folderButtons.current[index]?.focus({ preventScroll: true }));
   };
 
+  const atStart = start <= 0;
+  const atEnd = start >= maxStart;
+  // Counter follows where the shelf actually stops (the last slide can be shorter than a full step).
+  const firstShown = Math.min(Math.round(-offsetFor(clampStart(start)) / metrics.step) + 1, SHELF_SIZE);
+  const lastShown = Math.min(firstShown + metrics.visible - 1, SHELF_SIZE);
+
   return (
     <MotionConfig reducedMotion="user">
       <section id="projects" className="scroll-mt-16 overflow-x-clip py-24">
@@ -42,45 +126,116 @@ export default function Projects() {
               Projects<span className="text-accent">.</span>
             </h2>
             <p className="mt-3 text-foreground/60">
-              <span className="hidden sm:inline">Hover a file to peek inside, click to open it.</span>
-              <span className="sm:hidden">Tap a file to peek inside, tap again to open it.</span>
+              <span className="hidden sm:inline">Hover a file to peek inside, click to open it. Slide the shelf for more.</span>
+              <span className="sm:hidden">Tap a file to peek inside, tap again to open it. Swipe for more.</span>
             </p>
           </Reveal>
         </div>
 
         <LayoutGroup id="project-files">
           <Reveal delay={0.1}>
-            {/* Scrolls sideways on phones only. On larger screens nothing clips the files,
-                so the paper stays visible while it flies back in. Top padding leaves room for peeking papers. */}
-            <div className="overflow-x-auto pb-8 pt-20 [scrollbar-width:none] sm:overflow-visible [&::-webkit-scrollbar]:hidden">
-              <div className="mx-auto flex w-max items-end px-6 [--fw:min(44vw,190px)] [--overlap:-0.1] sm:[--fw:clamp(180px,19vw,250px)] sm:[--overlap:-0.2]">
-                {projects.map((project, index) => (
-                  <ProjectFolder
-                    key={project.title}
-                    project={project}
-                    index={index}
-                    total={projects.length}
-                    hovered={peeked === index && opened === null}
-                    dimmed={(peeked !== null && peeked !== index) || (opened !== null && opened !== index)}
-                    shift={opened === null || opened === index ? 0 : index < opened ? -1 : 1}
-                    open={opened === index}
-                    buttonRef={(el) => {
-                      folderButtons.current[index] = el;
-                    }}
-                    onPeekStart={() => opened === null && setPeeked(index)}
-                    onPeekEnd={() => setPeeked((current) => (current === index ? null : current))}
-                    onActivate={(pointerType) => activate(index, pointerType)}
-                  />
-                ))}
+            <div className="relative">
+              {/* Visible window of the shelf. Clips sideways only, so peeking papers can rise above it. */}
+              <div ref={viewportRef} className="overflow-x-clip pb-8 pt-20">
+                <motion.div
+                  ref={trackRef}
+                  className="flex w-max cursor-grab items-end active:cursor-grabbing [--fw:min(44vw,190px)] [--overlap:-0.1] sm:[--fw:clamp(180px,19vw,250px)] sm:[--overlap:-0.2]"
+                  // Line the first file up with the page content; leave the same room after the last one.
+                  style={{
+                    x: trackX,
+                    touchAction: "pan-y",
+                    paddingLeft: "max(1.5rem, calc((100vw - 72rem) / 2 + 1.5rem))",
+                    paddingRight: "max(1.5rem, calc((100vw - 72rem) / 2 + 1.5rem))",
+                  }}
+                  drag={opened === null ? "x" : false}
+                  dragConstraints={{ left: -metrics.maxShift, right: 0 }}
+                  dragElastic={0.12}
+                  dragMomentum={false}
+                  onDragStart={() => {
+                    dragged.current = true;
+                    setPeeked(null);
+                  }}
+                  onDragEnd={onDragEnd}
+                >
+                  <Bookend side="start" />
+                  {shelfItems.map((item, index) => (
+                    <ProjectFolder
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      total={shelfItems.length}
+                      hovered={peeked === index && opened === null}
+                      dimmed={(peeked !== null && peeked !== index) || (opened !== null && opened !== index)}
+                      shift={opened === null || opened === index ? 0 : index < opened ? -1 : 1}
+                      open={opened === index}
+                      trackX={trackX}
+                      viewportRef={viewportRef}
+                      buttonRef={(el) => {
+                        folderButtons.current[index] = el;
+                      }}
+                      onPeekStart={() => opened === null && !dragged.current && setPeeked(index)}
+                      onPeekEnd={() => setPeeked((current) => (current === index ? null : current))}
+                      onActivate={(pointerType) => activate(index, pointerType)}
+                      onFocusFile={() => ensureVisible(index)}
+                    />
+                  ))}
+                  <Bookend side="end" />
+                </motion.div>
               </div>
+
+              {/* Slide buttons */}
+              <ShelfArrow side="left" disabled={atStart} onClick={() => slide(-1)} />
+              <ShelfArrow side="right" disabled={atEnd} onClick={() => slide(1)} />
             </div>
           </Reveal>
 
+          {/* Handwritten counter of the files in view */}
+          <p className="mt-2 text-center font-hand text-lg text-foreground/60" aria-live="polite">
+            {String(firstShown).padStart(2, "0")}–{String(lastShown).padStart(2, "0")} / {SHELF_SIZE}
+          </p>
+
           <AnimatePresence>
-            {opened !== null && <ProjectPaper key={projects[opened].title} project={projects[opened]} onClose={close} />}
+            {opened !== null && (
+              <ProjectPaper key={shelfItems[opened].id} project={shelfItems[opened]} onClose={close} />
+            )}
           </AnimatePresence>
         </LayoutGroup>
       </section>
     </MotionConfig>
+  );
+}
+
+// Round glass button on the side of the shelf.
+function ShelfArrow({ side, disabled, onClick }: { side: "left" | "right"; disabled: boolean; onClick: () => void }) {
+  const Icon = side === "left" ? ChevronLeft : ChevronRight;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={side === "left" ? "Show previous files" : "Show next files"}
+      className={`nav-glass absolute top-[55%] z-30 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-foreground transition hover:scale-105 disabled:pointer-events-none disabled:opacity-0 ${
+        side === "left" ? "left-3 sm:left-6" : "right-3 sm:right-6"
+      }`}
+    >
+      <Icon className="h-5 w-5" />
+    </button>
+  );
+}
+
+// L-shaped metal bookend that holds the row of files at each end of the shelf.
+function Bookend({ side }: { side: "start" | "end" }) {
+  const start = side === "start";
+  return (
+    <div
+      aria-hidden="true"
+      className={`relative shrink-0 self-end ${start ? "mr-2" : "ml-2"}`}
+      style={{ width: "calc(var(--fw) * 0.24)", height: "calc(var(--fw) * 0.75)", zIndex: start ? 40 : 0 }}
+    >
+      {/* Upright plate, leaning on the files */}
+      <span className={`metal-plate absolute bottom-0 top-0 block w-[18%] rounded-t-[3px] ${start ? "right-0" : "left-0"}`} />
+      {/* Base plate that slides under the files */}
+      <span className={`metal-plate absolute -bottom-px block h-[5%] rounded-[1px] ${start ? "left-0 right-0" : "left-0 -right-0"}`} />
+    </div>
   );
 }

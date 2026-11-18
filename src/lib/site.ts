@@ -39,7 +39,9 @@ export type ProjectPage =
   // A printed screenshot of the system (16:10 image inside /public/images/projects).
   | { kind: "screenshot"; src: string; caption: string }
   // Handwritten-style notes on lined paper.
-  | { kind: "notes"; heading: string; paragraphs?: string[]; points?: string[] };
+  | { kind: "notes"; heading: string; paragraphs?: string[]; points?: string[] }
+  // Handwritten note with links to every contact channel in siteConfig.contact.
+  | { kind: "contact"; heading: string; paragraphs?: string[] };
 
 export type Project = {
   title: string;
@@ -146,4 +148,60 @@ export const projects: Project[] = [
     href: "https://example.com/taskflow",
     repo: "https://github.com/your-username/taskflow",
   },
+];
+
+// ---------- Project shelf ----------
+
+// Total number of files on the projects shelf. Spots without a project become
+// "Reserved for you" files that invite visitors to get in touch.
+// To show a new project, add it to `projects` above; one reserved file disappears automatically.
+export const SHELF_SIZE = 15;
+
+// Everything the shelf needs to draw one file and open its paper.
+export type ShelfItem = {
+  id: string;
+  title: string;
+  summary: string;
+  noteColor: string;
+  // Screenshot that peeks out of the file. Reserved files have none.
+  cover?: string;
+  pages: ProjectPage[];
+  href?: string;
+  repo?: string;
+  reserved: boolean;
+};
+
+const RESERVED_NOTE_COLOR = "#fbd3a6";
+
+const reservedFile = (spot: number): ShelfItem => ({
+  id: `reserved-${spot}`,
+  title: "Reserved for you",
+  summary: "This spot is waiting for our next project together.",
+  noteColor: RESERVED_NOTE_COLOR,
+  pages: [
+    {
+      kind: "contact",
+      heading: "Let's work together",
+      paragraphs: [
+        "This file is still empty. It could hold your project next: a collaboration, a website, a system or an app for your business.",
+        "Reach me through any of these and tell me about your idea:",
+      ],
+    },
+  ],
+  reserved: true,
+});
+
+export const shelfItems: ShelfItem[] = [
+  ...projects.map((project) => ({
+    id: project.title,
+    title: project.title,
+    summary: project.summary,
+    noteColor: project.noteColor,
+    cover: project.cover,
+    pages: project.pages,
+    href: project.href,
+    repo: project.repo,
+    reserved: false,
+  })),
+  ...Array.from({ length: Math.max(0, SHELF_SIZE - projects.length) }, (_, i) => reservedFile(i + 1)),
 ];

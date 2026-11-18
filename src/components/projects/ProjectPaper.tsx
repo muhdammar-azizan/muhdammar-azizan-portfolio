@@ -3,8 +3,8 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
-import { ArrowUpRight, ChevronLeft, ChevronRight, CodeXml, X } from "lucide-react";
-import type { Project, ProjectPage } from "@/lib/site";
+import { ArrowUpRight, ChevronLeft, ChevronRight, CodeXml, Mail, X } from "lucide-react";
+import { siteConfig, type ProjectPage, type ShelfItem } from "@/lib/site";
 import { paperLayoutId } from "./ProjectFolder";
 
 const EASE = [0.32, 0.72, 0, 1] as const;
@@ -26,12 +26,12 @@ const sheetVariants: Variants = {
 };
 
 type ProjectPaperProps = {
-  project: Project;
+  project: ShelfItem;
   onClose: () => void;
 };
 
 /**
- * The paper taken out of a project file, shown in the middle of the screen.
+ * The paper taken out of a file on the shelf, shown in the middle of the screen.
  * Pages are turned with the arrows, by clicking the paper edges, or with the arrow keys.
  */
 export default function ProjectPaper({ project, onClose }: ProjectPaperProps) {
@@ -82,7 +82,7 @@ export default function ProjectPaper({ project, onClose }: ProjectPaperProps) {
       className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-8"
       role="dialog"
       aria-modal="true"
-      aria-label={`${project.title} project file`}
+      aria-label={project.reserved ? "Reserved file: contact details" : `${project.title} project file`}
     >
       {/* Dim backdrop; clicking it puts the paper back */}
       <motion.div
@@ -211,7 +211,7 @@ export default function ProjectPaper({ project, onClose }: ProjectPaperProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-2 ${total < 2 ? "invisible" : ""}`}>
             <button
               type="button"
               onClick={() => turn(-1)}
@@ -236,14 +236,24 @@ export default function ProjectPaper({ project, onClose }: ProjectPaperProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <a
-              href={project.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition hover:opacity-90"
-            >
-              Visit website <ArrowUpRight className="h-4 w-4" />
-            </a>
+            {project.href && (
+              <a
+                href={project.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition hover:opacity-90"
+              >
+                Visit website <ArrowUpRight className="h-4 w-4" />
+              </a>
+            )}
+            {project.reserved && (
+              <a
+                href={`mailto:${siteConfig.contact.email}`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition hover:opacity-90"
+              >
+                <Mail className="h-4 w-4" /> Email me
+              </a>
+            )}
             {project.repo && (
               <a
                 href={project.repo}
@@ -279,6 +289,10 @@ function PageContent({ page }: { page: ProjectPage }) {
     );
   }
 
+  if (page.kind === "contact") {
+    return <ContactNote page={page} />;
+  }
+
   return (
     // Its own lined background so the lines move with the text when long notes scroll.
     <div className="notebook absolute inset-0 overflow-y-auto pb-[var(--line)] pl-[calc(var(--margin)_+_16px)] pr-5 pt-[var(--top)] font-hand sm:pr-10">
@@ -300,6 +314,53 @@ function PageContent({ page }: { page: ProjectPage }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+// Every way to reach me, written as a handwritten list. Values come from siteConfig.contact.
+const contactLines = () => {
+  const { email, whatsapp, linkedin, instagram } = siteConfig.contact;
+  const phone = `+${whatsapp}`;
+  return [
+    { label: "Email", value: email, href: `mailto:${email}` },
+    { label: "WhatsApp", value: phone, href: `https://wa.me/${whatsapp}`, external: true },
+    { label: "Phone", value: phone, href: `tel:${phone}` },
+    { label: "LinkedIn", value: linkedin.replace(/^https?:\/\/(www\.)?/, ""), href: linkedin, external: true },
+    { label: "Instagram", value: instagram.replace(/^https?:\/\/(www\.)?/, ""), href: instagram, external: true },
+  ];
+};
+
+// Invitation written on the paper inside a reserved file.
+function ContactNote({ page }: { page: Extract<ProjectPage, { kind: "contact" }> }) {
+  return (
+    <div className="notebook absolute inset-0 overflow-y-auto pb-[var(--line)] pl-[calc(var(--margin)_+_16px)] pr-5 pt-[var(--top)] font-hand sm:pr-10">
+      <h3 className="mb-[var(--line)] text-[length:calc(var(--line)*0.85)] font-bold leading-[var(--line)] text-[#1f2a44]">
+        {page.heading}
+      </h3>
+      {page.paragraphs?.map((text) => (
+        <p key={text} className="mb-[var(--line)] text-[length:calc(var(--line)*0.62)] leading-[var(--line)]">
+          {text}
+        </p>
+      ))}
+      <ul className="text-[length:calc(var(--line)*0.62)] leading-[var(--line)]">
+        {contactLines().map((line) => (
+          <li key={line.label} className="flex flex-wrap gap-x-2">
+            <span className="w-24 shrink-0 text-[#2a2f3a]/60 sm:w-28">{line.label}</span>
+            <a
+              href={line.href}
+              target={line.external ? "_blank" : undefined}
+              rel={line.external ? "noopener noreferrer" : undefined}
+              className="min-w-0 break-all font-bold text-[#1f4fb8] underline decoration-[#1f4fb8]/40 decoration-wavy underline-offset-4 transition hover:decoration-[#1f4fb8]"
+            >
+              {line.value}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-[var(--line)] text-[length:calc(var(--line)*0.62)] leading-[var(--line)] text-[#2a2f3a]/70">
+        – {siteConfig.name.split(" ")[1]}
+      </p>
     </div>
   );
 }
