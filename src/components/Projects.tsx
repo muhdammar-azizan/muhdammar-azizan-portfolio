@@ -74,9 +74,6 @@ export default function Projects() {
           </motion.div>
         </AnimatePresence>
         <div className="absolute inset-0 bg-black/45" />
-        {/* Blend the top and bottom edges into the page background */}
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
       </div>
 
       <div className="relative">
