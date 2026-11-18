@@ -32,6 +32,21 @@ body {
     color 0.3s ease;
 }
 
+/* Circular theme reveal (see ThemeToggle). The new theme is clipped by JS,
+   so the default cross-fade is switched off. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* While the theme is switching, skip color transitions so the reveal shows final colors. */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+}
+
 /* Frosted glass pill behind the hovered navbar link. */
 .nav-glass {
   background: rgba(255, 255, 255, 0.45);
