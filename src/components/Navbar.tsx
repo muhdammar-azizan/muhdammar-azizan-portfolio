@@ -26,6 +26,17 @@ export default function Navbar() {
           ))}
         </ul>
 
+        {/* Resume button only appears once resumeUrl is set in site.ts */}
+        {siteConfig.resumeUrl && (
+          <a
+            href={siteConfig.resumeUrl}
+            download
+            className="hidden rounded-full border border-accent px-4 py-1.5 text-sm text-accent transition hover:bg-accent hover:text-[#0a1128] md:block"
+          >
+            Resume
+          </a>
+        )}
+
         {/* Mobile menu button */}
         <button
           type="button"

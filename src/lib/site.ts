@@ -7,8 +7,10 @@ export const siteConfig = {
     "Portfolio of Muhammad Ammar Azizan, a software engineer building clean and reliable web applications.",
   // TODO: replace with the real domain after deployment.
   url: "https://example.com",
-  tagline: "I build clean, fast and reliable software.",
+  tagline: "Building reliable web applications, from idea to deployment.",
   role: "Software Engineer",
+  // Profile photo shown in the hero section.
+  heroImage: "/images/profile.jpg",
   bio: [
     "Placeholder: write a short introduction about yourself here.",
     "Placeholder: add a second paragraph about your background and what drives you.",
@@ -27,7 +29,6 @@ export const siteConfig = {
 export const navItems = [
   { label: "About", href: "#about" },
   { label: "Projects", href: "#projects" },
-  { label: "Skills", href: "#skills" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -55,20 +56,5 @@ export const projects: Project[] = [
     title: "Project Three",
     description: "Placeholder description for your third project.",
     tags: ["Python", "API"],
-  },
-];
-
-export const skills = [
-  {
-    title: "Frontend",
-    items: ["React", "Next.js", "TypeScript", "Tailwind CSS"],
-  },
-  {
-    title: "Backend",
-    items: ["Node.js", "REST APIs", "SQL", "Authentication"],
-  },
-  {
-    title: "Tools",
-    items: ["Git & GitHub", "Docker", "CI/CD", "Testing"],
   },
 ];

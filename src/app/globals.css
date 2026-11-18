@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
-/* Dark theme by default. Colors will be refined later. */
+/* Dark navy theme. Colors will be refined later. */
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #0a1128;
+  --foreground: #e8ecf5;
   --accent: #5eead4;
 }
 
