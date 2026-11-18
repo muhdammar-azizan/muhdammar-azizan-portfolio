@@ -119,7 +119,8 @@ export default function Projects() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <section id="projects" className="scroll-mt-16 overflow-x-clip py-24">
+      {/* Straight line along the top; the ruler closes the section at the bottom */}
+      <section id="projects" className="scroll-mt-16 overflow-x-clip border-t border-foreground/15 pt-24">
         <div className="mx-auto max-w-6xl px-6">
           <Reveal>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -200,6 +201,9 @@ export default function Projects() {
             )}
           </AnimatePresence>
         </LayoutGroup>
+
+        {/* Ruler along the bottom edge of the section */}
+        <Ruler />
       </section>
     </MotionConfig>
   );
@@ -236,6 +240,26 @@ function Bookend({ side }: { side: "start" | "end" }) {
       <span className={`metal-plate absolute bottom-0 top-0 block w-[18%] rounded-t-[3px] ${start ? "right-0" : "left-0"}`} />
       {/* Base plate that slides under the files */}
       <span className={`metal-plate absolute -bottom-px block h-[5%] rounded-[1px] ${start ? "left-0 right-0" : "left-0 -right-0"}`} />
+    </div>
+  );
+}
+
+// Number of centimetre marks on the ruler; enough to cover very wide screens.
+const RULER_CM = 70;
+
+// Full-width ruler with millimetre, half-centimetre and centimetre marks, numbered every centimetre.
+function Ruler() {
+  return (
+    <div aria-hidden="true" className="ruler relative mt-20 h-11 w-full select-none overflow-hidden border-t border-foreground/25">
+      {Array.from({ length: RULER_CM }, (_, cm) => (
+        <span
+          key={cm}
+          className="absolute top-[18px] -translate-x-1/2 font-mono text-[10px] leading-none text-foreground/45"
+          style={{ left: `calc(var(--ruler-start) + var(--cm) * ${cm})` }}
+        >
+          {cm}
+        </span>
+      ))}
     </div>
   );
 }
