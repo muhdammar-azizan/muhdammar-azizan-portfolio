@@ -1,23 +1,45 @@
 @import "tailwindcss";
 
-/* Dark navy theme. Colors will be refined later. */
+/* Light theme is the default. The dark theme is switched with data-theme="dark" on <html>. */
 :root {
+  --background: #f4f5f8;
+  --foreground: #0f172a;
+  --accent: #0f766e;
+  --accent-contrast: #ffffff;
+  --hero-word: #0a0a0a;
+}
+
+:root[data-theme="dark"] {
   --background: #0a1128;
   --foreground: #e8ecf5;
   --accent: #5eead4;
+  --accent-contrast: #0a1128;
+  --hero-word: #e11d2e;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-hero-word: var(--hero-word);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-script: var(--font-script);
+}
+
+body {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 /* Respect users who prefer less motion. */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  body {
+    transition: none;
   }
 }

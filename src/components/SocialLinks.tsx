@@ -47,7 +47,7 @@ export default function SocialLinks() {
             target={link.href.startsWith("http") ? "_blank" : undefined}
             rel="noopener noreferrer"
             aria-label={link.label}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-foreground/80 transition hover:-translate-y-1 hover:border-accent hover:text-accent"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-foreground/15 text-foreground/80 transition hover:-translate-y-1 hover:border-accent hover:text-accent"
           >
             {link.icon}
           </a>

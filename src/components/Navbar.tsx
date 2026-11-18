@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { navItems, siteConfig } from "@/lib/site";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-background/80 backdrop-blur">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-foreground/10 bg-background/80 backdrop-blur">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <a href="#top" className="font-semibold tracking-tight">
           {siteConfig.name.split(" ")[1]}
@@ -26,31 +27,35 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* Resume button only appears once resumeUrl is set in site.ts */}
-        {siteConfig.resumeUrl && (
-          <a
-            href={siteConfig.resumeUrl}
-            download
-            className="hidden rounded-full border border-accent px-4 py-1.5 text-sm text-accent transition hover:bg-accent hover:text-[#0a1128] md:block"
-          >
-            Resume
-          </a>
-        )}
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
 
-        {/* Mobile menu button */}
-        <button
-          type="button"
-          className="md:hidden"
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-          onClick={() => setOpen((value) => !value)}
-        >
-          {open ? <X /> : <Menu />}
-        </button>
+          {/* Resume button only appears once resumeUrl is set in site.ts */}
+          {siteConfig.resumeUrl && (
+            <a
+              href={siteConfig.resumeUrl}
+              download
+              className="hidden rounded-full border border-accent px-4 py-1.5 text-sm text-accent transition hover:bg-accent hover:text-accent-contrast md:block"
+            >
+              Resume
+            </a>
+          )}
+
+          {/* Mobile menu button */}
+          <button
+            type="button"
+            className="md:hidden"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
+          >
+            {open ? <X /> : <Menu />}
+          </button>
+        </div>
       </nav>
 
       {open && (
-        <ul className="border-t border-white/10 px-6 py-4 md:hidden">
+        <ul className="border-t border-foreground/10 px-6 py-4 md:hidden">
           {navItems.map((item) => (
             <li key={item.href}>
               <a

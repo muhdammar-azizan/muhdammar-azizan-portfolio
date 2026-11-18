@@ -14,9 +14,9 @@ export default function Projects() {
           <Reveal key={project.title} delay={(index % 3) * 0.1}>
             <motion.article
               whileHover={{ y: -6 }}
-              className="group h-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+              className="group h-full overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.04]"
             >
-              <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-accent/30 to-white/5">
+              <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-accent/30 to-foreground/5">
                 {project.image && (
                   // next/image compresses and lazy-loads the picture automatically.
                   <Image
