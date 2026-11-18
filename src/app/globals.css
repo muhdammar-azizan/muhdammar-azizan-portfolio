@@ -9,10 +9,10 @@
 }
 
 :root[data-theme="dark"] {
-  --background: #0a1128;
+  --background: #161616;
   --foreground: #e8ecf5;
   --accent: #5eead4;
-  --accent-contrast: #0a1128;
+  --accent-contrast: #161616;
 }
 
 @theme inline {
