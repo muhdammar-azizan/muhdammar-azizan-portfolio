@@ -53,8 +53,8 @@ export default function Hero() {
           className="order-1 flex justify-center lg:order-2 lg:justify-end"
         >
           <FlipPortrait
-            front={siteConfig.heroImage}
-            back={siteConfig.heroAvatar}
+            memoji={siteConfig.heroAvatar}
+            photo={siteConfig.heroImage}
             name={siteConfig.name}
             width={800}
             height={1096}

@@ -21,18 +21,18 @@ const MAX_TILT = 12;
 type Spark = { id: number; x: number; y: number; size: number; color: string; delay: number };
 
 type FlipPortraitProps = {
-  front: string;
-  back: string;
+  memoji: string;
+  photo: string;
   name: string;
   width: number;
   height: number;
 };
 
 /**
- * Polaroid that tilts with the mouse and flips in 3D when clicked,
- * swapping the real photo for the memoji with a glare sweep and a spark burst.
+ * Polaroid that tilts with the mouse and flips in 3D when clicked.
+ * The memoji shows first; clicking reveals the real photo with a glare sweep and a spark burst.
  */
-export default function FlipPortrait({ front, back, name, width, height }: FlipPortraitProps) {
+export default function FlipPortrait({ memoji, photo, name, width, height }: FlipPortraitProps) {
   const [flipped, setFlipped] = useState(false);
   const [flipCount, setFlipCount] = useState(0);
   const [sparks, setSparks] = useState<Spark[]>([]);
@@ -126,7 +126,7 @@ export default function FlipPortrait({ front, back, name, width, height }: FlipP
           onPointerMove={handleMove}
           onPointerLeave={resetTilt}
           aria-pressed={flipped}
-          aria-label={flipped ? `Show photo of ${name}` : `Show memoji of ${name}`}
+          aria-label={flipped ? `Show memoji of ${name}` : `Show photo of ${name}`}
           className="relative block cursor-pointer rounded-sm outline-none focus-visible:ring-4 focus-visible:ring-accent/60"
           style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
           whileHover={reduceMotion ? undefined : { scale: 1.03 }}
@@ -141,10 +141,10 @@ export default function FlipPortrait({ front, back, name, width, height }: FlipP
           >
             {/* Lift and grow slightly during each flip */}
             <motion.div animate={lift} style={{ transformStyle: "preserve-3d" }}>
-              <Face src={front} alt={`Photo of ${name}`} width={width} height={height} glareKey={flipCount} priority />
+              <Face src={memoji} alt={`Memoji of ${name}`} width={width} height={height} glareKey={flipCount} priority />
               <Face
-                src={back}
-                alt={`Memoji of ${name}`}
+                src={photo}
+                alt={`Photo of ${name}`}
                 width={width}
                 height={height}
                 glareKey={flipCount}
@@ -158,7 +158,7 @@ export default function FlipPortrait({ front, back, name, width, height }: FlipP
       {/* Hint below the photo */}
       <p className="inline-flex items-center gap-2 text-sm text-foreground/60 lg:text-[max(0.875rem,0.9vw)]">
         <Sparkles className="h-4 w-4 text-accent" aria-hidden="true" />
-        {flipped ? "Click to see the real me" : "Click the photo to meet my memoji"}
+        {flipped ? "Click to see my memoji again" : "Click the photo to see the real me"}
       </p>
     </div>
   );
