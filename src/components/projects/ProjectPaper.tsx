@@ -95,7 +95,7 @@ export default function ProjectPaper({ project, onClose }: ProjectPaperProps) {
       />
 
       {/* Width is limited by both the screen width and height, so the paper and controls always fit */}
-      <div className="relative w-[min(92vw,calc((100dvh_-_190px)*0.75))] sm:w-[min(92vw,960px,calc((100dvh_-_170px)*1.3))]">
+      <div className="relative w-[min(92vw,calc((100dvh_-_170px)*0.75))] sm:w-[min(94vw,1240px,calc((100dvh_-_120px)*1.3))]">
         {/* The paper itself. It grows out of the file thanks to the shared layoutId. */}
         <motion.div
           layoutId={paperLayoutId(project)}
@@ -149,7 +149,7 @@ export default function ProjectPaper({ project, onClose }: ProjectPaperProps) {
             </motion.article>
           </AnimatePresence>
 
-          {/* Click the left or right edge of the paper to turn pages */}
+          {/* Click the left or right edge of the paper (or use the arrow keys) to turn pages */}
           {hasPrev && (
             <button
               type="button"
@@ -157,7 +157,7 @@ export default function ProjectPaper({ project, onClose }: ProjectPaperProps) {
               aria-label="Previous page"
               className="group absolute inset-y-0 left-0 z-10 flex w-[12%] items-center justify-start pl-2 outline-none"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/10 text-[#2a2f3a] opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/10 text-[#2a2f3a] opacity-50 transition group-hover:bg-black/15 group-hover:opacity-100 group-focus-visible:opacity-100">
                 <ChevronLeft className="h-5 w-5" />
               </span>
             </button>
@@ -169,7 +169,7 @@ export default function ProjectPaper({ project, onClose }: ProjectPaperProps) {
               aria-label="Next page"
               className="group absolute inset-y-0 right-0 z-10 flex w-[12%] items-center justify-end pr-2 outline-none"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/10 text-[#2a2f3a] opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/10 text-[#2a2f3a] opacity-50 transition group-hover:bg-black/15 group-hover:opacity-100 group-focus-visible:opacity-100">
                 <ChevronRight className="h-5 w-5" />
               </span>
               {/* Folded page corner, a hint that the page can be turned */}
@@ -193,7 +193,7 @@ export default function ProjectPaper({ project, onClose }: ProjectPaperProps) {
 
         {/* Controls under the paper */}
         <motion.div
-          className="mt-6 flex flex-wrap items-center justify-between gap-4 text-white"
+          className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-white"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
@@ -211,31 +211,8 @@ export default function ProjectPaper({ project, onClose }: ProjectPaperProps) {
             </div>
           </div>
 
-          <div className={`flex items-center gap-2 ${total < 2 ? "invisible" : ""}`}>
-            <button
-              type="button"
-              onClick={() => turn(-1)}
-              disabled={!hasPrev}
-              aria-label="Previous page"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 transition hover:border-white disabled:opacity-30"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <span className="min-w-14 text-center font-hand text-lg">
-              {page + 1} / {total}
-            </span>
-            <button
-              type="button"
-              onClick={() => turn(1)}
-              disabled={!hasNext}
-              aria-label="Next page"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 transition hover:border-white disabled:opacity-30"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
+          {/* Links sit where the page counter used to be; the page number is written on the paper itself */}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             {project.href && (
               <a
                 href={project.href}
