@@ -5,7 +5,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Moon, Sun } from "lucide-react";
 
 // Length of the circular theme reveal (ms).
-const REVEAL_MS = 700;
+const REVEAL_MS = 900;
+// Ease-out curve: the circle leaves the button quickly, then glides and settles gently.
+const REVEAL_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 // Watch the data-theme attribute so the icon always matches the real theme.
 function subscribe(onChange: () => void) {
@@ -55,13 +57,13 @@ export default function ThemeToggle() {
     const transition = document.startViewTransition(() => applyTheme(next));
 
     transition.ready.then(() => {
+      // Grow the circle from the button until it covers the whole screen.
       root.animate(
-        {
-          clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`],
-        },
+        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
         {
           duration: REVEAL_MS,
-          easing: "cubic-bezier(0.65, 0, 0.35, 1)",
+          easing: REVEAL_EASING,
+          fill: "forwards",
           pseudoElement: "::view-transition-new(root)",
         },
       );
