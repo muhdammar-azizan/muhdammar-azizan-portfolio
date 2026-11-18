@@ -244,50 +244,31 @@ function Bookend({ side }: { side: "start" | "end" }) {
   );
 }
 
-// Number of centimetre and inch marks on the ruler; enough to cover very wide screens.
+// Number of centimetre marks on the ruler; enough to cover very wide screens.
 const RULER_CM = 70;
-const RULER_IN = 28;
 
-// Full-width ruler like a real one: centimetres along the top edge, inches along the bottom edge,
-// and a little printed text in the middle.
+// Slim full-width ruler with centimetre marks along the top edge, numbered on one side.
 function Ruler() {
   return (
-    <div
-      aria-hidden="true"
-      className="ruler relative mt-20 h-20 w-full select-none overflow-hidden border-y border-foreground/25"
-    >
-      {/* Centimetre numbers under the top marks */}
+    <div aria-hidden="true" className="ruler relative mt-20 h-10 w-full select-none overflow-hidden border-y border-foreground/25">
       {Array.from({ length: RULER_CM }, (_, cm) => (
         <span
-          key={`cm-${cm}`}
-          className="absolute top-[17px] -translate-x-1/2 font-mono text-[11px] font-medium leading-none text-foreground/60"
+          key={cm}
+          className="absolute top-[14px] -translate-x-1/2 font-mono text-[10px] font-medium leading-none text-foreground/55"
           style={{ left: `calc(var(--ruler-start) + var(--cm) * ${cm})` }}
         >
           {cm}
         </span>
       ))}
-
-      {/* Inch numbers above the bottom marks */}
-      {Array.from({ length: RULER_IN }, (_, inch) => (
-        <span
-          key={`in-${inch}`}
-          className="absolute bottom-[16px] -translate-x-1/2 font-mono text-[10px] leading-none text-foreground/45"
-          style={{ left: `calc(var(--ruler-start) + var(--inch) * ${inch})` }}
-        >
-          {inch}
-        </span>
-      ))}
-
-      {/* Printed details, like on a shop-bought ruler */}
-      {/* Unit names sit in the gap between 0 and 1 on each scale */}
-      <span className="absolute top-[18px] -translate-x-1/2 font-mono text-[9px] leading-[11px] text-foreground/45" style={{ left: "calc(var(--ruler-start) + var(--cm) * 0.5)" }}>
+      {/* Unit name in the gap between 0 and 1 */}
+      <span
+        className="absolute top-[14px] -translate-x-1/2 font-mono text-[8px] leading-[10px] text-foreground/40"
+        style={{ left: "calc(var(--ruler-start) + var(--cm) * 0.5)" }}
+      >
         cm
       </span>
-      <span className="absolute bottom-[16px] -translate-x-1/2 font-mono text-[9px] leading-[10px] text-foreground/40" style={{ left: "calc(var(--ruler-start) + var(--inch) * 0.5)" }}>
-        inch
-      </span>
-      {/* Printed text in the empty middle band */}
-      <span className="absolute right-6 top-1/2 hidden -translate-y-1/2 font-mono text-[9px] uppercase tracking-[0.25em] text-foreground/35 sm:block">
+      {/* Small printed text, like on a shop-bought ruler */}
+      <span className="absolute bottom-[3px] right-6 hidden font-mono text-[8px] uppercase tracking-[0.25em] text-foreground/30 sm:block">
         No. 3020 · Shatterproof · MA Studio
       </span>
     </div>

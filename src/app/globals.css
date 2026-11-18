@@ -99,43 +99,24 @@ html.theme-switching *::after {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
-/* Ruler at the bottom of the projects section.
-   Centimetre marks hang down from the top edge; inch marks rise from the bottom edge.
-   --cm is one centimetre on the ruler, --inch is 2.54 of those. */
+/* Ruler at the bottom of the projects section. Marks hang down from the top edge.
+   --cm is one centimetre on the ruler; millimetre marks are a tenth of it. */
 .ruler {
-  --cm: 48px;
-  --inch: calc(var(--cm) * 2.54);
+  --cm: 40px;
   /* Leave room so the "0" is not cut off at the screen edge. */
   --ruler-start: 12px;
   --tick: color-mix(in srgb, var(--foreground) 45%, transparent);
   background-color: color-mix(in srgb, var(--foreground) 3%, transparent);
   background-image:
-    /* centimetre side (top) */
     repeating-linear-gradient(90deg, var(--tick) 0 1px, transparent 1px calc(var(--cm) / 10)),
     repeating-linear-gradient(90deg, var(--tick) 0 1px, transparent 1px calc(var(--cm) / 2)),
-    repeating-linear-gradient(90deg, var(--tick) 0 1px, transparent 1px var(--cm)),
-    /* inch side (bottom): eighths, quarters, halves and whole inches */
-    repeating-linear-gradient(90deg, var(--tick) 0 1px, transparent 1px calc(var(--inch) / 8)),
-    repeating-linear-gradient(90deg, var(--tick) 0 1px, transparent 1px calc(var(--inch) / 4)),
-    repeating-linear-gradient(90deg, var(--tick) 0 1px, transparent 1px calc(var(--inch) / 2)),
-    repeating-linear-gradient(90deg, var(--tick) 0 1px, transparent 1px var(--inch));
+    repeating-linear-gradient(90deg, var(--tick) 0 1px, transparent 1px var(--cm));
   background-size:
-    100% 6px,
-    100% 10px,
-    100% 15px,
-    100% 5px,
-    100% 8px,
-    100% 11px,
-    100% 14px;
+    100% 4px,
+    100% 7px,
+    100% 11px;
   background-repeat: no-repeat;
-  background-position:
-    var(--ruler-start) 0,
-    var(--ruler-start) 0,
-    var(--ruler-start) 0,
-    var(--ruler-start) 100%,
-    var(--ruler-start) 100%,
-    var(--ruler-start) 100%,
-    var(--ruler-start) 100%;
+  background-position: var(--ruler-start) 0;
 }
 
 /* Lined notebook paper with a red margin line. Line spacing follows --line. */
