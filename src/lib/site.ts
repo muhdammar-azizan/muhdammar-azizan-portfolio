@@ -10,7 +10,7 @@ export const siteConfig = {
   tagline: "Building reliable web applications, from idea to deployment.",
   role: "Software Engineer",
   // Profile photo shown in the hero section.
-  heroImage: "/images/profile-cutout.webp",
+  heroImage: "/images/profile-polaroid.jpg",
   bio: [
     "Placeholder: write a short introduction about yourself here.",
     "Placeholder: add a second paragraph about your background and what drives you.",

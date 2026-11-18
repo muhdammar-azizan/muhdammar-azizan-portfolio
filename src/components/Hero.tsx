@@ -6,35 +6,31 @@ import { siteConfig } from "@/lib/site";
 
 export default function Hero() {
   return (
-    <section
-      id="top"
-      className="relative flex min-h-screen items-end justify-center overflow-hidden"
-    >
-      {/* Big static script word behind the photo. Color follows the theme. */}
-      <h1
-        className="pointer-events-none absolute inset-x-0 top-[22%] select-none text-center font-script text-[26vw] leading-none text-hero-word sm:top-[18%] sm:text-[20vw]"
-      >
-        Portfolio
-        <span className="sr-only"> of {siteConfig.name}</span>
-      </h1>
+    <section id="top" className="relative min-h-screen overflow-hidden">
+      <h1 className="sr-only">{siteConfig.name}</h1>
 
-      {/* Cut-out photo, anchored to the bottom and centered. */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative z-10 flex justify-center"
-      >
-        <Image
-          src={siteConfig.heroImage}
-          alt={`Portrait of ${siteConfig.name}`}
-          width={760}
-          height={1132}
-          sizes="(min-width: 640px) 560px, 90vw"
-          priority
-          className="h-[80vh] w-auto max-w-[95vw] object-contain object-bottom"
-        />
-      </motion.div>
+      <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-12 px-6 pb-12 pt-28 lg:grid-cols-2">
+        {/* Left column is intentionally empty for now. */}
+        <div />
+
+        {/* Right column: profile photo */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="flex justify-center lg:justify-end"
+        >
+          <Image
+            src={siteConfig.heroImage}
+            alt={`Portrait of ${siteConfig.name}`}
+            width={800}
+            height={1096}
+            sizes="(min-width: 1024px) 420px, 80vw"
+            priority
+            className="h-auto max-h-[75vh] w-auto max-w-full rounded-sm shadow-2xl shadow-black/30"
+          />
+        </motion.div>
+      </div>
     </section>
   );
 }

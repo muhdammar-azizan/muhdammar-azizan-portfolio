@@ -6,7 +6,6 @@
   --foreground: #0f172a;
   --accent: #0f766e;
   --accent-contrast: #ffffff;
-  --hero-word: #0a0a0a;
 }
 
 :root[data-theme="dark"] {
@@ -14,7 +13,6 @@
   --foreground: #e8ecf5;
   --accent: #5eead4;
   --accent-contrast: #0a1128;
-  --hero-word: #e11d2e;
 }
 
 @theme inline {
@@ -22,10 +20,8 @@
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
   --color-accent-contrast: var(--accent-contrast);
-  --color-hero-word: var(--hero-word);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-script: var(--font-script);
 }
 
 body {
