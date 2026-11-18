@@ -2,8 +2,8 @@
 
 /* Light theme is the default. The dark theme is switched with data-theme="dark" on <html>. */
 :root {
-  --background: #f4f5f8;
-  --foreground: #0f172a;
+  --background: #f3ece1;
+  --foreground: #1c1917;
   --accent: #0f766e;
   --accent-contrast: #ffffff;
 }

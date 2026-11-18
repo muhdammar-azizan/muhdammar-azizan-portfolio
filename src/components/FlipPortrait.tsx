@@ -156,7 +156,7 @@ export default function FlipPortrait({ front, back, name, width, height }: FlipP
       </div>
 
       {/* Hint below the photo */}
-      <p className="inline-flex items-center gap-2 text-sm text-foreground/60">
+      <p className="inline-flex items-center gap-2 text-sm text-foreground/60 lg:text-[max(0.875rem,0.9vw)]">
         <Sparkles className="h-4 w-4 text-accent" aria-hidden="true" />
         {flipped ? "Click to see the real me" : "Click the photo to meet my memoji"}
       </p>
@@ -191,7 +191,7 @@ function Face({ src, alt, width, height, glareKey, back, priority }: FaceProps) 
         width={width}
         height={height}
         priority={priority}
-        sizes="(min-width: 1024px) 420px, 80vw"
+        sizes="(min-width: 1024px) 45vw, 80vw"
         className="h-auto max-h-[75vh] w-auto max-w-full"
       />
       {/* Light glare that sweeps across the photo on every flip */}
