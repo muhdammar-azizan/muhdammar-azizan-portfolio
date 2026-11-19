@@ -179,10 +179,12 @@ html[data-intro="play"] [data-hello-word] {
 
 /* ---------- Pencil cursor ---------- */
 
-/* The PencilCursor component sets data-cursor="on" once it is tracking a real mouse.
-   Until then, and on touch screens, the normal cursor stays. */
+/* The PencilCursor component sets data-cursor="on" as soon as it finds a real mouse.
+   On touch screens, or with reduced motion, the normal cursor stays. */
 html[data-cursor="on"],
-html[data-cursor="on"] * {
+html[data-cursor="on"] *,
+html[data-cursor="on"] *::before,
+html[data-cursor="on"] *::after {
   cursor: none !important;
 }
 

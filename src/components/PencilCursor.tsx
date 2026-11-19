@@ -44,12 +44,14 @@ export default function PencilCursor() {
   useEffect(() => {
     if (!enabled) return;
     const root = document.documentElement;
+    // Hide the system cursor right away. The pencil itself appears with the first mouse move.
+    root.dataset.cursor = "on";
 
     const onMove = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
       x.set(event.clientX);
       y.set(event.clientY);
-      // The system cursor is hidden only once the pencil has a position, so it never disappears for nothing.
+      // Set again in case something removed it (for example a hot reload during development).
       if (root.dataset.cursor !== "on") root.dataset.cursor = "on";
       setShown(true);
     };
