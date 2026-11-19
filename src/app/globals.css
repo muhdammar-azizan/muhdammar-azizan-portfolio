@@ -177,6 +177,20 @@ html[data-intro="play"] [data-hello-word] {
   visibility: hidden;
 }
 
+/* ---------- Pencil cursor ---------- */
+
+/* The PencilCursor component sets data-cursor="on" once it is tracking a real mouse.
+   Until then, and on touch screens, the normal cursor stays. */
+html[data-cursor="on"],
+html[data-cursor="on"] * {
+  cursor: none !important;
+}
+
+/* Keep the normal cursor where the visitor types or picks from a list. */
+html[data-cursor="on"] :is(input, textarea, select, [contenteditable="true"]) {
+  cursor: auto !important;
+}
+
 /* Respect users who prefer less motion. */
 @media (prefers-reduced-motion: reduce) {
   html {

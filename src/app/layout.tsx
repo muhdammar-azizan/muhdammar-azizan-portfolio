@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Kalam } from "next/font/google";
 import localFont from "next/font/local";
+import PencilCursor from "@/components/PencilCursor";
 import { siteConfig } from "@/lib/site";
 import "./globals.css";
 
@@ -97,6 +98,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-screen bg-background font-sans text-foreground">
         {children}
+        <PencilCursor />
       </body>
     </html>
   );
