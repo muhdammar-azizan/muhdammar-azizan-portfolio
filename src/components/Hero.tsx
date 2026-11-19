@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import FlipPortrait from "./FlipPortrait";
 import GlyphWord from "./intro/GlyphWord";
+import Keychains from "./keychains/Keychains";
 import { siteConfig } from "@/lib/site";
 
 // Each line of text fades up one after another.
@@ -15,6 +16,7 @@ const fadeUp = (delay: number) => ({
 export default function Hero() {
   return (
     <section id="top" className="relative min-h-screen overflow-hidden">
+      <Keychains />
       {/* On laptops this matches the other sections (72rem wide).
           On larger screens the hero grows with the screen width. */}
       <div className="mx-auto grid min-h-screen max-w-[max(72rem,80vw)] items-center gap-12 px-6 pb-12 pt-28 lg:grid-cols-2 lg:gap-[max(3rem,4vw)]">

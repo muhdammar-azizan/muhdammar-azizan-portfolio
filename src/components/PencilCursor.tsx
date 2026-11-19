@@ -16,17 +16,42 @@ const PRESS_TILT = -34;
 const TIP_X = 6; // px from the left edge of the drawing to the tip
 
 // Pencil trail: a thin line that follows the tip while the mouse moves and fades away.
-const TRAIL_LIFETIME = 1000; // ms a point of the line stays visible
+const TRAIL_LIFETIME = 500; // ms a point of the line stays visible
 const TRAIL_WIDTH = 1.6; // px, at the freshest end of the line
 const TRAIL_MIN_STEP = 1.5; // px the mouse must move before a new point is added
 const TRAIL_WOBBLE = 0.35; // px of hand-drawn unevenness
+
+// The line is only drawn on empty space. It is not drawn on, or close to, anything in this list
+// (menu bar, images, project files, buttons, links, headings, paragraphs) or any element that holds text.
+const CONTENT =
+  "header, footer, img, picture, video, svg, button, a, input, textarea, select, label, summary, figure, article, " +
+  "h1, h2, h3, h4, h5, h6, p, li, .ruler, [data-shelf-slot], [data-keychain]";
+const CONTENT_MARGIN = 24; // px of clear space needed around the pencil tip
+
+const hasOwnText = (element: Element) =>
+  Array.from(element.childNodes).some((node) => node.nodeType === Node.TEXT_NODE && !!node.textContent?.trim());
+
+// True when this spot of the page shows something (text, picture, button...) rather than empty space.
+const isContentAt = (px: number, py: number) => {
+  const element = document.elementFromPoint(px, py);
+  if (!element) return false;
+  return !!element.closest(CONTENT) || hasOwnText(element);
+};
+
+// Checks the tip and four spots around it, so the line also stays away from the edges of content.
+const nearContent = (px: number, py: number) =>
+  isContentAt(px, py) ||
+  isContentAt(px + CONTENT_MARGIN, py) ||
+  isContentAt(px - CONTENT_MARGIN, py) ||
+  isContentAt(px, py + CONTENT_MARGIN) ||
+  isContentAt(px, py - CONTENT_MARGIN);
 
 type TrailPoint = { x: number; y: number; t: number; breakBefore: boolean };
 
 /**
  * Replaces the mouse pointer with a small pencil. The tip is the exact click point.
  * It leans and grows a little over links and buttons, presses down while clicking,
- * and draws a thin pencil line behind it that fades away within a second.
+ * and draws a thin pencil line behind it, on empty space only, that fades away in half a second.
  * Only used with a mouse, and not when the visitor asks for reduced motion.
  */
 export default function PencilCursor() {
@@ -110,6 +135,11 @@ export default function PencilCursor() {
     const addPoint = (px: number, py: number) => {
       const last = points[points.length - 1];
       if (last && !startNewLine && Math.hypot(px - last.x, py - last.y) < TRAIL_MIN_STEP) return;
+      // On or near content: no line, and the next line starts fresh instead of joining across the gap.
+      if (nearContent(px, py)) {
+        startNewLine = true;
+        return;
+      }
       points.push({
         x: px + (Math.random() - 0.5) * 2 * TRAIL_WOBBLE,
         y: py + (Math.random() - 0.5) * 2 * TRAIL_WOBBLE,

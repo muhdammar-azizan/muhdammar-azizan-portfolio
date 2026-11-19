@@ -1,0 +1,332 @@
+"use client";
+
+import { useEffect, useId, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { motion, useMotionValue, useReducedMotion } from "framer-motion";
+import { siFlutter, siGithub, siLaravel, siNextdotjs, type SimpleIcon } from "simple-icons";
+
+// ---------- What hangs where ----------
+
+type KeychainData = {
+  id: string;
+  icon: SimpleIcon;
+  // Distance from the left edge, as a share of the hero width: on large screens, and on phones/tablets
+  // (null = not shown there, to keep small screens tidy).
+  x: number;
+  xSmall: number | null;
+  // Chain length and fob size, relative to the base fob size (--kc), so everything scales together.
+  chain: number;
+  scale: number;
+  // Offsets the gentle idle swing, so the keychains never move in step.
+  phase: number;
+};
+
+// A scattered, hand-placed layout. Logos come from simple-icons, so adding another one is one line here.
+const KEYCHAINS: KeychainData[] = [
+  { id: "laravel", icon: siLaravel, x: 21, xSmall: 12, chain: 0.7, scale: 1.0, phase: 0.4 },
+  { id: "github", icon: siGithub, x: 36, xSmall: 50, chain: 1.5, scale: 0.9, phase: 2.1 },
+  { id: "nextjs", icon: siNextdotjs, x: 48, xSmall: null, chain: 0.45, scale: 0.85, phase: 3.7 },
+  { id: "flutter", icon: siFlutter, x: 93, xSmall: 88, chain: 1.1, scale: 1.05, phase: 5.2 },
+];
+
+// ---------- Drawing ----------
+
+// Fob drawing space (SVG units): the 24-unit logo, glass around it, and room above for the eyelet.
+const VIEW = { x: -3, y: -6, w: 30, h: 33 };
+const GLASS = 4.4; // thickness of the glass around the logo, in SVG units
+const LOGO_CENTER = 12; // every logo here is centred on x = 12
+const EYELET_Y = -3.9; // centre of the metal ring the chain is attached to
+
+// ---------- Swing physics ----------
+
+const IDLE_SWAY = 0.022; // rad, how far it drifts on its own
+const DAMPING = 0.9;
+const MAX_ANGLE = 0.95; // rad
+const MAX_SPEED = 2.4; // rad/s
+
+type Sim = { angle: number; speed: number; time: number };
+
+/**
+ * Keychains hanging from the top of the hero. Each logo sits under a piece of glass shaped like the logo.
+ * They sway a little on their own and swing when the mouse passes over them (or when they are tapped).
+ */
+export default function Keychains() {
+  const reduceMotion = useReducedMotion();
+  // The opening intro hides the page; the keychains drop in once it starts handing over.
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const update = () => setReady(html.dataset.intro !== "play");
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(html, { attributes: true, attributeFilter: ["data-intro"] });
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 top-16 z-20 [--kc:46px] sm:[--kc:clamp(58px,5.6vw,108px)]"
+    >
+      {KEYCHAINS.map((item, index) => (
+        <KeychainItem key={item.id} item={item} index={index} ready={ready} reduceMotion={!!reduceMotion} />
+      ))}
+    </div>
+  );
+}
+
+type ItemProps = { item: KeychainData; index: number; ready: boolean; reduceMotion: boolean };
+
+function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const rotate = useMotionValue(0);
+  const slotRef = useRef<HTMLDivElement>(null);
+  const groupRef = useRef<HTMLDivElement>(null);
+  const fobRef = useRef<SVGSVGElement>(null);
+  const sim = useRef<Sim>({ angle: 0, speed: 0, time: item.phase * 3 });
+  const pointer = useRef<{ x: number; t: number } | null>(null);
+
+  const width = `calc(var(--kc) * ${item.scale})`;
+  const eyeletOffset = (EYELET_Y - VIEW.y) / VIEW.w; // share of the fob width
+  const pivotX = ((LOGO_CENTER - VIEW.x) / VIEW.w) * 100; // % of the fob width
+
+  // Adds a push to the swing (negative = the bottom moves to the right).
+  const push = (impulse: number) => {
+    const s = sim.current;
+    s.speed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, s.speed + impulse));
+  };
+
+  // ----- Swing simulation: a pendulum hanging from the top of the chain -----
+  useEffect(() => {
+    const slot = slotRef.current;
+    const group = groupRef.current;
+    if (!slot || !group || reduceMotion) return;
+
+    let frame = 0;
+    let last = 0;
+    let length = Math.max(group.offsetHeight, 60);
+    const measure = () => (length = Math.max(group.offsetHeight, 60));
+    window.addEventListener("resize", measure);
+
+    const step = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      const s = sim.current;
+      s.time += dt;
+      // Longer chains swing more slowly, like real ones.
+      const stiffness = 1500 / length;
+      const rest = IDLE_SWAY * Math.sin((s.time * 2 * Math.PI) / (7 + index * 1.3) + item.phase);
+      const substeps = Math.max(1, Math.ceil(dt * 120));
+      const h = dt / substeps;
+      for (let i = 0; i < substeps; i++) {
+        s.speed += (-stiffness * Math.sin(s.angle - rest) - DAMPING * s.speed) * h;
+        s.angle += s.speed * h;
+        if (Math.abs(s.angle) > MAX_ANGLE) {
+          s.angle = Math.sign(s.angle) * MAX_ANGLE;
+          s.speed *= -0.4;
+        }
+      }
+      rotate.set((s.angle * 180) / Math.PI);
+      frame = requestAnimationFrame(step);
+    };
+    const start = () => {
+      if (frame) return;
+      last = performance.now();
+      frame = requestAnimationFrame(step);
+    };
+    const stop = () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+    };
+
+    // Only simulate while the hero is on screen.
+    const observer = new IntersectionObserver(([entry]) => (entry.isIntersecting ? start() : stop()));
+    observer.observe(slot);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+      stop();
+    };
+  }, [index, item.phase, reduceMotion, rotate]);
+
+  // A little swing as it drops in, once the intro lets the page show.
+  useEffect(() => {
+    if (!ready || reduceMotion) return;
+    const timer = window.setTimeout(() => push(index % 2 ? 1.5 : -1.5), 350 + index * 120);
+    return () => window.clearTimeout(timer);
+  }, [ready, reduceMotion, index]);
+
+  // ----- Mouse and touch -----
+  const side = (clientX: number) => {
+    const box = fobRef.current?.getBoundingClientRect();
+    if (!box) return 0;
+    return (clientX - (box.left + box.width / 2)) / (box.width / 2);
+  };
+
+  const onPointerEnter = (event: ReactPointerEvent) => {
+    if (event.pointerType !== "mouse") return;
+    pointer.current = { x: event.clientX, t: performance.now() };
+    // Even a slow touch of the glass nudges it away from the pointer.
+    push(-side(event.clientX) * 0.5);
+  };
+  const onPointerMove = (event: ReactPointerEvent) => {
+    if (event.pointerType !== "mouse") return;
+    const now = performance.now();
+    const previous = pointer.current;
+    if (previous) {
+      const dx = event.clientX - previous.x;
+      const vx = (dx / Math.max(now - previous.t, 8)) * 1000;
+      // Moving right pushes the bottom of the keychain to the right (a negative angle).
+      push(-dx * 0.012 * (1 + Math.min(Math.abs(vx), 2400) / 900));
+    }
+    pointer.current = { x: event.clientX, t: now };
+  };
+  const onPointerLeave = () => {
+    pointer.current = null;
+  };
+  const onPointerDown = (event: ReactPointerEvent) => {
+    if (event.pointerType === "mouse") return;
+    push(-(side(event.clientX) || (Math.random() < 0.5 ? -1 : 1)) * 1.7);
+  };
+  const handlers = { onPointerEnter, onPointerMove, onPointerLeave, onPointerDown };
+
+  const slotStyle = {
+    "--x-small": `${item.xSmall ?? item.x}%`,
+    "--x": `${item.x}%`,
+  } as CSSProperties;
+
+  return (
+    <motion.div
+      ref={slotRef}
+      data-keychain
+      className={`absolute top-0 ${item.xSmall === null ? "hidden lg:block" : ""} left-[var(--x-small)] lg:left-[var(--x)]`}
+      style={slotStyle}
+      initial={reduceMotion ? false : { y: -340, opacity: 0 }}
+      animate={ready || reduceMotion ? { y: 0, opacity: 1 } : undefined}
+      transition={{ type: "spring", stiffness: 90, damping: 15, delay: index * 0.12 }}
+    >
+      {/* Small hook the chain hangs from, fixed to the edge of the navbar */}
+      <span className="absolute -top-[5px] left-0 block h-[9px] w-[9px] -translate-x-1/2 rounded-full border-2 border-[#8f959e] bg-[#cfd3d9] shadow-sm" />
+
+      {/* Everything below swings around the top of the chain */}
+      <motion.div
+        ref={groupRef}
+        // flow-root keeps the fob's top margin inside this box (otherwise the whole box slides down).
+        className="relative flow-root"
+        style={{
+          rotate,
+          width,
+          marginLeft: `calc(${width} * ${-pivotX / 100})`,
+          transformOrigin: `${pivotX}% 0%`,
+        }}
+      >
+        {/* Chain */}
+        <div
+          {...handlers}
+          className="keychain-chain absolute top-0 w-2 -translate-x-1/2"
+          style={{
+            left: `${pivotX}%`,
+            height: `calc(var(--kc) * ${item.chain})`,
+            pointerEvents: "auto",
+          }}
+        />
+
+        {/* Glass fob shaped like the logo */}
+        <svg
+          ref={fobRef}
+          viewBox={`${VIEW.x} ${VIEW.y} ${VIEW.w} ${VIEW.h}`}
+          className="block overflow-visible"
+          style={{
+            width,
+            height: `calc(${width} * ${VIEW.h / VIEW.w})`,
+            marginTop: `calc(var(--kc) * ${item.chain} - ${width} * ${eyeletOffset})`,
+            filter: "drop-shadow(0 5px 5px rgba(30, 20, 10, 0.32))",
+          }}
+        >
+          <defs>
+            <linearGradient id={`${id}-body`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="24">
+              <stop offset="0" stopColor="#fff" stopOpacity="0.5" />
+              <stop offset="1" stopColor="#fff" stopOpacity="0.08" />
+            </linearGradient>
+            {/* Bright sheen across the glass, with a faint bounce of light at the far corner */}
+            <linearGradient id={`${id}-sheen`} gradientUnits="userSpaceOnUse" x1="-3" y1="-4" x2="27" y2="26">
+              <stop offset="0" stopColor="#fff" stopOpacity="0.85" />
+              <stop offset="0.28" stopColor="#fff" stopOpacity="0" />
+              <stop offset="0.7" stopColor="#fff" stopOpacity="0" />
+              <stop offset="0.86" stopColor="#fff" stopOpacity="0.32" />
+              <stop offset="1" stopColor="#fff" stopOpacity="0" />
+            </linearGradient>
+            <mask id={`${id}-mask`} maskUnits="userSpaceOnUse" x={VIEW.x} y={VIEW.y} width={VIEW.w} height={VIEW.h}>
+              <path d={item.icon.path} fill="#fff" stroke="#fff" strokeWidth={GLASS - 0.4} strokeLinejoin="round" />
+              <circle cx={LOGO_CENTER} cy="-1.7" r="2.1" fill="#fff" />
+            </mask>
+            {/* A crescent is the glass shape minus the same shape moved a little: light only on one edge */}
+            {[
+              ["a", 1.0],
+              ["b", -1.0],
+            ].map(([name, shift]) => (
+              <mask key={name} id={`${id}-edge-${name}`} maskUnits="userSpaceOnUse" x={VIEW.x} y={VIEW.y} width={VIEW.w} height={VIEW.h}>
+                <g fill="#fff" stroke="#fff" strokeWidth={GLASS - 0.4} strokeLinejoin="round">
+                  <path d={item.icon.path} />
+                  <circle cx={LOGO_CENTER} cy="-1.7" r="2.1" />
+                </g>
+                <g transform={`translate(${shift} ${shift})`} fill="#000" stroke="#000" strokeWidth={GLASS - 0.4} strokeLinejoin="round">
+                  <path d={item.icon.path} />
+                  <circle cx={LOGO_CENTER} cy="-1.7" r="2.1" />
+                </g>
+              </mask>
+            ))}
+          </defs>
+
+          {/* Thickness of the glass, seen along the lower edge */}
+          <path
+            d={item.icon.path}
+            transform="translate(0.3 0.55)"
+            fill="var(--glass-edge)"
+            stroke="var(--glass-edge)"
+            strokeWidth={GLASS + 0.4}
+            strokeLinejoin="round"
+          />
+          <circle cx={LOGO_CENTER + 0.3} cy="-1.15" r="2.3" fill="var(--glass-edge)" />
+
+          {/* Pale backing so dark logos stay readable in dark mode */}
+          <path d={item.icon.path} fill="var(--glass-backing)" stroke="var(--glass-backing)" strokeWidth={GLASS} strokeLinejoin="round" />
+
+          {/* Glass body: bright rim, then the clear centre */}
+          <path d={item.icon.path} fill="var(--glass-rim)" stroke="var(--glass-rim)" strokeWidth={GLASS + 0.3} strokeLinejoin="round" />
+          <circle cx={LOGO_CENTER} cy="-1.7" r="2.2" fill="var(--glass-rim)" />
+          <path d={item.icon.path} fill={`url(#${id}-body)`} stroke={`url(#${id}-body)`} strokeWidth={GLASS - 0.6} strokeLinejoin="round" />
+          <circle cx={LOGO_CENTER} cy="-1.7" r="1.6" fill={`url(#${id}-body)`} />
+
+          {/* The logo under the glass */}
+          <path d={item.icon.path} fill={`#${item.icon.hex}`} />
+
+          {/* Light sliding across the glass */}
+          <g mask={`url(#${id}-mask)`}>
+            <rect x={VIEW.x} y={VIEW.y} width={VIEW.w} height={VIEW.h} fill={`url(#${id}-sheen)`} />
+            {/* Thin crescents of light on the outer edge of the glass: bright upper-left, soft lower-right */}
+            <rect x={VIEW.x} y={VIEW.y} width={VIEW.w} height={VIEW.h} fill="#fff" fillOpacity="0.9" mask={`url(#${id}-edge-a)`} />
+            <rect x={VIEW.x} y={VIEW.y} width={VIEW.w} height={VIEW.h} fill="#fff" fillOpacity="0.42" mask={`url(#${id}-edge-b)`} />
+          </g>
+
+          {/* Metal ring that the chain is fixed to */}
+          <circle cx={LOGO_CENTER} cy={EYELET_Y} r="1.55" fill="none" stroke="#8f959e" strokeWidth="0.75" />
+          <circle cx={LOGO_CENTER} cy={EYELET_Y} r="1.55" fill="none" stroke="#e6e9ee" strokeWidth="0.25" strokeDasharray="1.6 8" />
+
+          {/* Invisible, slightly bigger shape that catches the mouse and touch */}
+          <path
+            d={item.icon.path}
+            {...handlers}
+            data-keychain
+            fill="transparent"
+            stroke="transparent"
+            strokeWidth="9"
+            strokeLinejoin="round"
+            style={{ pointerEvents: "all" }}
+          />
+        </svg>
+      </motion.div>
+    </motion.div>
+  );
+}
