@@ -1,7 +1,16 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
-import { motion, useMotionValue, useReducedMotion } from "framer-motion";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+import { createPortal } from "react-dom";
+import { AnimatePresence, motion, useMotionValue, useReducedMotion } from "framer-motion";
 import { siFlutter, siGithub, siLaravel, siNextdotjs, type SimpleIcon } from "simple-icons";
 
 // ---------- What hangs where ----------
@@ -45,6 +54,11 @@ const MAX_SPEED = 2.4; // rad/s
 
 type Sim = { angle: number; speed: number; time: number };
 
+// Name tooltip: how far below the pointer it sits, and how close to the screen edge it may go.
+const TIP_OFFSET = 30;
+const TIP_EDGE = 56;
+const TIP_TOUCH_MS = 1500; // how long it stays after a tap
+
 /**
  * Keychains hanging from the top of the hero. Each logo sits under a piece of glass shaped like the logo.
  * They sway a little on their own and swing when the mouse passes over them (or when they are tapped).
@@ -85,6 +99,23 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
   const fobRef = useRef<SVGSVGElement>(null);
   const sim = useRef<Sim>({ angle: 0, speed: 0, time: item.phase * 3 });
   const pointer = useRef<{ x: number; t: number } | null>(null);
+
+  // Tooltip with the technology name. It follows the pointer while it is over the keychain.
+  // true in the browser, false while the server renders (so the portal is never built on the server)
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const [tipOpen, setTipOpen] = useState(false);
+  const tipX = useMotionValue(0);
+  const tipY = useMotionValue(0);
+  const tipTimer = useRef(0);
+  useEffect(() => () => window.clearTimeout(tipTimer.current), []);
+  const placeTip = (clientX: number, clientY: number) => {
+    tipX.set(Math.min(Math.max(clientX, TIP_EDGE), window.innerWidth - TIP_EDGE));
+    tipY.set(clientY + TIP_OFFSET);
+  };
 
   const width = `calc(var(--kc) * ${item.scale})`;
   const eyeletOffset = (EYELET_Y - VIEW.y) / VIEW.w; // share of the fob width
@@ -167,11 +198,14 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
   const onPointerEnter = (event: ReactPointerEvent) => {
     if (event.pointerType !== "mouse") return;
     pointer.current = { x: event.clientX, t: performance.now() };
+    placeTip(event.clientX, event.clientY);
+    setTipOpen(true);
     // Even a slow touch of the glass nudges it away from the pointer.
     push(-side(event.clientX) * 0.5);
   };
   const onPointerMove = (event: ReactPointerEvent) => {
     if (event.pointerType !== "mouse") return;
+    placeTip(event.clientX, event.clientY);
     const now = performance.now();
     const previous = pointer.current;
     if (previous) {
@@ -182,12 +216,18 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
     }
     pointer.current = { x: event.clientX, t: now };
   };
-  const onPointerLeave = () => {
+  const onPointerLeave = (event: ReactPointerEvent) => {
     pointer.current = null;
+    if (event.pointerType === "mouse") setTipOpen(false);
   };
   const onPointerDown = (event: ReactPointerEvent) => {
     if (event.pointerType === "mouse") return;
     push(-(side(event.clientX) || (Math.random() < 0.5 ? -1 : 1)) * 1.7);
+    // Touch has no hover, so the name is shown for a moment after a tap.
+    placeTip(event.clientX, event.clientY);
+    setTipOpen(true);
+    window.clearTimeout(tipTimer.current);
+    tipTimer.current = window.setTimeout(() => setTipOpen(false), TIP_TOUCH_MS);
   };
   const handlers = { onPointerEnter, onPointerMove, onPointerLeave, onPointerDown };
 
@@ -197,6 +237,7 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
   } as CSSProperties;
 
   return (
+    <>
     <motion.div
       ref={slotRef}
       data-keychain
@@ -328,5 +369,31 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
         </svg>
       </motion.div>
     </motion.div>
+
+    {/* Rendered on the page itself, not inside the swinging keychain, so it stays still and readable */}
+    {mounted &&
+      createPortal(
+        <AnimatePresence>
+          {tipOpen && (
+            <motion.div aria-hidden="true" className="pointer-events-none fixed left-0 top-0 z-[1001]" style={{ x: tipX, y: tipY }}>
+              <motion.div
+                className="-translate-x-1/2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                transition={{ duration: 0.16, ease: "easeOut" }}
+              >
+                <div className="relative whitespace-nowrap rounded-lg bg-foreground px-3 py-1.5 font-sans text-[13px] font-medium text-background shadow-lg">
+                  {/* Little arrow pointing up to the pointer */}
+                  <span className="absolute -top-1 left-1/2 block h-2 w-2 -translate-x-1/2 rotate-45 rounded-[1px] bg-foreground" />
+                  {item.icon.title}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
+    </>
   );
 }
