@@ -12,6 +12,7 @@ import {
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useMotionValue, useReducedMotion } from "framer-motion";
 import { siFlutter, siGithub, siLaravel, siNextdotjs, type SimpleIcon } from "simple-icons";
+import { siteConfig } from "@/lib/site";
 
 // ---------- What hangs where ----------
 
@@ -27,12 +28,14 @@ type KeychainData = {
   scale: number;
   // Offsets the gentle idle swing, so the keychains never move in step.
   phase: number;
+  // When set, clicking the glass opens this page in a new tab.
+  href?: string;
 };
 
 // A scattered, hand-placed layout. Logos come from simple-icons, so adding another one is one line here.
 const KEYCHAINS: KeychainData[] = [
   { id: "laravel", icon: siLaravel, x: 21, xSmall: 12, chain: 0.7, scale: 1.0, phase: 0.4 },
-  { id: "github", icon: siGithub, x: 36, xSmall: 50, chain: 1.5, scale: 0.9, phase: 2.1 },
+  { id: "github", icon: siGithub, x: 36, xSmall: 50, chain: 1.5, scale: 0.9, phase: 2.1, href: siteConfig.contact.github },
   { id: "nextjs", icon: siNextdotjs, x: 48, xSmall: null, chain: 0.45, scale: 0.85, phase: 3.7 },
   { id: "flutter", icon: siFlutter, x: 93, xSmall: 88, chain: 1.1, scale: 1.05, phase: 5.2 },
 ];
@@ -79,7 +82,6 @@ export default function Keychains() {
 
   return (
     <div
-      aria-hidden="true"
       className="pointer-events-none absolute inset-x-0 top-16 z-20 [--kc:46px] sm:[--kc:clamp(58px,5.6vw,108px)]"
     >
       {KEYCHAINS.map((item, index) => (
@@ -231,6 +233,15 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
   };
   const handlers = { onPointerEnter, onPointerMove, onPointerLeave, onPointerDown };
 
+  // Invisible, solid area over the whole logo. The logo shapes have holes (the cat's face, the gaps in the
+  // Laravel cube), and the mouse and touch must work there too. The outline path adds reach around odd shapes.
+  const hitArea = (
+    <g {...handlers} data-keychain style={{ pointerEvents: "all" }}>
+      <circle cx={LOGO_CENTER} cy="12" r="12.8" fill="transparent" />
+      <path d={item.icon.path} fill="transparent" stroke="transparent" strokeWidth="9" strokeLinejoin="round" />
+    </g>
+  );
+
   const slotStyle = {
     "--x-small": `${item.xSmall ?? item.x}%`,
     "--x": `${item.x}%`,
@@ -241,6 +252,8 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
     <motion.div
       ref={slotRef}
       data-keychain
+      // Plain keychains are decoration; a keychain with a link stays available to keyboard and screen reader users.
+      aria-hidden={item.href ? undefined : true}
       className={`absolute top-0 ${item.xSmall === null ? "hidden lg:block" : ""} left-[var(--x-small)] lg:left-[var(--x)]`}
       style={slotStyle}
       initial={reduceMotion ? false : { y: -340, opacity: 0 }}
@@ -355,17 +368,21 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
           <circle cx={LOGO_CENTER} cy={EYELET_Y} r="1.55" fill="none" stroke="#8f959e" strokeWidth="0.75" />
           <circle cx={LOGO_CENTER} cy={EYELET_Y} r="1.55" fill="none" stroke="#e6e9ee" strokeWidth="0.25" strokeDasharray="1.6 8" />
 
-          {/* Invisible, slightly bigger shape that catches the mouse and touch */}
-          <path
-            d={item.icon.path}
-            {...handlers}
-            data-keychain
-            fill="transparent"
-            stroke="transparent"
-            strokeWidth="9"
-            strokeLinejoin="round"
-            style={{ pointerEvents: "all" }}
-          />
+          {/* Invisible, slightly bigger shape that catches the mouse and touch (and the click, if there is a link) */}
+          {item.href ? (
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${item.icon.title} (opens in a new tab)`}
+              className="outline-none focus-visible:[outline:2px_solid_var(--accent)] focus-visible:[outline-offset:2px]"
+              style={{ pointerEvents: "all" }}
+            >
+              {hitArea}
+            </a>
+          ) : (
+            hitArea
+          )}
         </svg>
       </motion.div>
     </motion.div>
@@ -387,6 +404,7 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
                   {/* Little arrow pointing up to the pointer */}
                   <span className="absolute -top-1 left-1/2 block h-2 w-2 -translate-x-1/2 rotate-45 rounded-[1px] bg-foreground" />
                   {item.icon.title}
+                  {item.href && <span aria-hidden="true"> ↗</span>}
                 </div>
               </motion.div>
             </motion.div>
