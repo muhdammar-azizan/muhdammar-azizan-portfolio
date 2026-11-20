@@ -57,6 +57,11 @@ const MAX_SPEED = 2.4; // rad/s
 
 type Sim = { angle: number; speed: number; time: number };
 
+// A keychain that is a link must stay easy to click, so it settles while the pointer is on it.
+const HELD_FREQUENCY = 11; // rad/s: how firmly it is pulled back to hanging straight (about 0.4 s to settle)
+const LINK_NUDGE = 0.25; // the small wiggle when the pointer arrives
+const LINK_REACH = 1.4; // size of the steady click area, relative to the fob width
+
 // Name tooltip: how far below the pointer it sits, and how close to the screen edge it may go.
 const TIP_OFFSET = 30;
 const TIP_EDGE = 56;
@@ -101,6 +106,10 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
   const fobRef = useRef<SVGSVGElement>(null);
   const sim = useRef<Sim>({ angle: 0, speed: 0, time: item.phase * 3 });
   const pointer = useRef<{ x: number; t: number } | null>(null);
+  const linked = !!item.href;
+  // held: the pointer is on a linked keychain, so it settles. frozen: the button is down, so it stays still.
+  const held = useRef(false);
+  const frozen = useRef(false);
 
   // Tooltip with the technology name. It follows the pointer while it is over the keychain.
   // true in the browser, false while the server renders (so the portal is never built on the server)
@@ -122,6 +131,7 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
   const width = `calc(var(--kc) * ${item.scale})`;
   const eyeletOffset = (EYELET_Y - VIEW.y) / VIEW.w; // share of the fob width
   const pivotX = ((LOGO_CENTER - VIEW.x) / VIEW.w) * 100; // % of the fob width
+  const centerBelowChain = (12 - EYELET_Y) / VIEW.w; // logo centre below the end of the chain, share of the fob width
 
   // Adds a push to the swing (negative = the bottom moves to the right).
   const push = (impulse: number) => {
@@ -146,13 +156,24 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
       last = now;
       const s = sim.current;
       s.time += dt;
+      if (frozen.current) {
+        // Button held down: keep the keychain exactly where it is.
+        s.speed = 0;
+        frame = requestAnimationFrame(step);
+        return;
+      }
       // Longer chains swing more slowly, like real ones.
-      const stiffness = 1500 / length;
-      const rest = IDLE_SWAY * Math.sin((s.time * 2 * Math.PI) / (7 + index * 1.3) + item.phase);
+      const free = 1500 / length;
+      // While the pointer is on a linked keychain: pulled straight, critically damped, no idle drift.
+      const stiffness = held.current ? HELD_FREQUENCY * HELD_FREQUENCY : free;
+      const damping = held.current ? 2 * HELD_FREQUENCY : DAMPING;
+      const rest = held.current
+        ? 0
+        : IDLE_SWAY * Math.sin((s.time * 2 * Math.PI) / (7 + index * 1.3) + item.phase);
       const substeps = Math.max(1, Math.ceil(dt * 120));
       const h = dt / substeps;
       for (let i = 0; i < substeps; i++) {
-        s.speed += (-stiffness * Math.sin(s.angle - rest) - DAMPING * s.speed) * h;
+        s.speed += (-stiffness * Math.sin(s.angle - rest) - damping * s.speed) * h;
         s.angle += s.speed * h;
         if (Math.abs(s.angle) > MAX_ANGLE) {
           s.angle = Math.sign(s.angle) * MAX_ANGLE;
@@ -202,15 +223,18 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
     pointer.current = { x: event.clientX, t: performance.now() };
     placeTip(event.clientX, event.clientY);
     setTipOpen(true);
-    // Even a slow touch of the glass nudges it away from the pointer.
-    push(-side(event.clientX) * 0.5);
+    // Even a slow touch of the glass nudges it away from the pointer. A link only wiggles a little,
+    // then settles, so the click lands where the logo is.
+    held.current = linked;
+    push(-side(event.clientX) * (linked ? LINK_NUDGE : 0.5));
   };
   const onPointerMove = (event: ReactPointerEvent) => {
     if (event.pointerType !== "mouse") return;
     placeTip(event.clientX, event.clientY);
     const now = performance.now();
     const previous = pointer.current;
-    if (previous) {
+    // A linked keychain is not pushed around by small mouse movements while someone is aiming at it.
+    if (previous && !linked) {
       const dx = event.clientX - previous.x;
       const vx = (dx / Math.max(now - previous.t, 8)) * 1000;
       // Moving right pushes the bottom of the keychain to the right (a negative angle).
@@ -220,10 +244,19 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
   };
   const onPointerLeave = (event: ReactPointerEvent) => {
     pointer.current = null;
+    held.current = false;
+    frozen.current = false;
     if (event.pointerType === "mouse") setTipOpen(false);
   };
+  const onPointerUp = () => {
+    frozen.current = false;
+  };
   const onPointerDown = (event: ReactPointerEvent) => {
-    if (event.pointerType === "mouse") return;
+    if (event.pointerType === "mouse") {
+      // Pressing a link holds the keychain still until the button is released.
+      if (linked) frozen.current = true;
+      return;
+    }
     push(-(side(event.clientX) || (Math.random() < 0.5 ? -1 : 1)) * 1.7);
     // Touch has no hover, so the name is shown for a moment after a tap.
     placeTip(event.clientX, event.clientY);
@@ -231,7 +264,7 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
     window.clearTimeout(tipTimer.current);
     tipTimer.current = window.setTimeout(() => setTipOpen(false), TIP_TOUCH_MS);
   };
-  const handlers = { onPointerEnter, onPointerMove, onPointerLeave, onPointerDown };
+  const handlers = { onPointerEnter, onPointerMove, onPointerLeave, onPointerDown, onPointerUp, onPointerCancel: onPointerLeave };
 
   // Invisible, solid area over the whole logo. The logo shapes have holes (the cat's face, the gaps in the
   // Laravel cube), and the mouse and touch must work there too. The outline path adds reach around odd shapes.
@@ -374,8 +407,9 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
               href={item.href}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`${item.icon.title} (opens in a new tab)`}
-              className="outline-none focus-visible:[outline:2px_solid_var(--accent)] focus-visible:[outline-offset:2px]"
+              tabIndex={-1}
+              aria-hidden="true"
+              className="outline-none"
               style={{ pointerEvents: "all" }}
             >
               {hitArea}
@@ -385,6 +419,25 @@ function KeychainItem({ item, index, ready, reduceMotion }: ItemProps) {
           )}
         </svg>
       </motion.div>
+
+      {/* Steady click area at the resting place of the logo. It does not swing, so the pointer
+          stays on it while the keychain settles. This is the link that keyboard and screen readers use. */}
+      {item.href && (
+        <a
+          href={item.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`${item.icon.title} (opens in a new tab)`}
+          data-keychain
+          {...handlers}
+          className="pointer-events-auto absolute left-0 block -translate-x-1/2 -translate-y-1/2 rounded-full outline-none focus-visible:[outline:2px_solid_var(--accent)] focus-visible:[outline-offset:3px]"
+          style={{
+            top: `calc(var(--kc) * ${item.chain} + ${width} * ${centerBelowChain})`,
+            width: `calc(${width} * ${LINK_REACH})`,
+            height: `calc(${width} * ${LINK_REACH})`,
+          }}
+        />
+      )}
     </motion.div>
 
     {/* Rendered on the page itself, not inside the swinging keychain, so it stays still and readable */}
