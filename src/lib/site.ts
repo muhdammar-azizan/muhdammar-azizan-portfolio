@@ -40,6 +40,7 @@ export const navItems = [
   { label: "About", href: "#about" },
   { label: "Projects", href: "#projects" },
   { label: "Journey", href: "#journey" },
+  { label: "Skills", href: "#skills" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -273,4 +274,17 @@ export const journey: JourneyEntry[] = [
       "Kolej Matrikulasi Kedah was where my foundation was built. The programme was fast and demanding, and it taught me discipline, time management and how to study consistently under pressure. It prepared me for university and gave me the habits I still rely on today.",
     highlights: ["Discipline", "Time Management", "Strong Foundation"],
   },
+];
+
+// ---------- Skills ----------
+
+// Kept short on purpose: six groups, shown together in one small panel.
+// A skill gets a coloured logo when src/lib/tech.ts knows it, or a small icon from the Skills component otherwise.
+export const skills = [
+  { group: "Languages", items: ["PHP", "Dart", "JavaScript", "SQL", "Python"] },
+  { group: "Frontend and Mobile", items: ["Flutter", "HTML", "CSS"] },
+  { group: "Backend", items: ["Laravel", "REST API Design", "API Integration"] },
+  { group: "Databases", items: ["MySQL", "Firebase Realtime Database"] },
+  { group: "Tools and Platforms", items: ["Git", "GitHub", "Cloudflare", "Firebase"] },
+  { group: "Other", items: ["Distributed Databases", "IoT with ESP32", "SAP Analytics Cloud", "AI Fundamentals"] },
 ];

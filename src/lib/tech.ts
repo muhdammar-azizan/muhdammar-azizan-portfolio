@@ -1,6 +1,9 @@
 import {
   siAndroid,
   siArduino,
+  siCloudflare,
+  siEspressif,
+  siSap,
   siBootstrap,
   siCss,
   siDart,
@@ -72,6 +75,12 @@ const ICONS: Record<string, SimpleIcon> = {
   vercel: siVercel,
   vue: siVuedotjs,
   vuejs: siVuedotjs,
+  // Names used in the Skills section.
+  cloudflare: siCloudflare,
+  firebaserealtimedatabase: siFirebase,
+  iotwithesp32: siEspressif,
+  esp32: siEspressif,
+  sapanalyticscloud: siSap,
 };
 
 const keyFor = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
