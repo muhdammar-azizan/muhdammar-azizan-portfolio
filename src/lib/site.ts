@@ -39,6 +39,7 @@ export const siteConfig = {
 export const navItems = [
   { label: "About", href: "#about" },
   { label: "Projects", href: "#projects" },
+  { label: "Journey", href: "#journey" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -217,4 +218,59 @@ export const shelfItems: ShelfItem[] = [
     reserved: false,
   })),
   ...Array.from({ length: Math.max(0, SHELF_SIZE - projects.length) }, (_, i) => reservedFile(i + 1)),
+];
+
+// ---------- Journey (timeline, newest first) ----------
+
+export type JourneyEntry = {
+  kind: "experience" | "education";
+  title: string;
+  organisation: string;
+  // Shown beside "Experience", for example "Part Time".
+  type?: string;
+  // Dates are plain text. Use "Present" as the end for something that is still going on.
+  start: string;
+  end: string;
+  story: string;
+  // Two or three short tags shown as stickers under the story.
+  highlights: string[];
+};
+
+export const journeyIntro =
+  "From a matriculation classroom to building real products with a team, this is how my path in tech has unfolded.";
+
+// TODO: replace every [BRACKETED] date below with the real one. Bracketed dates are drawn with a dotted underline.
+export const journey: JourneyEntry[] = [
+  {
+    kind: "experience",
+    title: "Partner and Logistics Manager",
+    organisation: "CukruDev Solutions",
+    type: "Part Time",
+    start: "[START MONTH YEAR]",
+    end: "Present",
+    story:
+      "CukruDev Solutions is a registered company I run in partnership with my teammates, built alongside our studies. We take on website projects for clients, and we also build our own digital products aimed at helping Malaysian students. As Logistics Manager, I keep the work organised: planning tasks, coordinating deadlines and resources across the team, and making sure what we promise to clients is actually delivered. I also contribute as a software engineer, so I see both how a product is built and how a business keeps running behind it.",
+    highlights: ["Teamwork", "Operations and Planning", "Client Delivery"],
+  },
+  {
+    kind: "education",
+    title: "Bachelor of Software Engineering student",
+    organisation: "Universiti Malaysia Pahang Al-Sultan Abdullah (UMPSA), Faculty of Computing",
+    start: "[START YEAR]",
+    end: "Present",
+    story:
+      "At UMPSA I moved from learning programming basics to building complete systems: databases, web and mobile applications, and the integration between them. University is also where I stepped outside the classroom. I joined national and university level competitions, pitched ideas to judges, worked with mentors, and picked up industry skills through programmes in data analytics and artificial intelligence. Those experiences taught me that good software is only half the job, and that explaining it clearly to people is the other half. I have also kept a strong academic record while doing all of this.",
+    highlights: ["Full Stack Development", "Competitions and Pitching", "Data and AI Learning"],
+  },
+  {
+    kind: "education",
+    title: "Matriculation student",
+    organisation: "Kolej Matrikulasi Kedah",
+    start: "[START YEAR]",
+    end: "[END YEAR]",
+    // Optional: add one sentence about your stream, a club or a memory from KMK, right after "under pressure."
+    story:
+      "Kolej Matrikulasi Kedah was where my foundation was built. The programme was fast and demanding, and it taught me discipline, time management and how to study consistently under pressure. It prepared me for university and gave me the habits I still rely on today.",
+    highlights: ["Discipline", "Time Management", "Strong Foundation"],
+  },
 ];
