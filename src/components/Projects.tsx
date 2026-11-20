@@ -25,15 +25,24 @@ const SLIDE_SPRING = { type: "spring", stiffness: 140, damping: 24, mass: 0.9 } 
  * Empty spots hold "Reserved for you" files with contact details.
  */
 export default function Projects() {
-  const [peeked, setPeeked] = useState<number | null>(null);
+  // Which file the pointer is on (-1 for none). A motion value rather than state: hovering would otherwise
+  // re-render the whole shelf. Each file listens to it for itself.
+  const peeked = useMotionValue(-1);
   const [opened, setOpened] = useState<number | null>(null);
+  const openedRef = useRef<number | null>(null);
   const folderButtons = useRef<(HTMLButtonElement | null)[]>([]);
   const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    openedRef.current = opened;
+  }, [opened]);
 
   // ---------- Sliding shelf ----------
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const trackX = useMotionValue(0);
+  // Width of the visible window; the files use it to work out which ones are near the edge.
+  const viewWidth = useMotionValue(0);
   const [metrics, setMetrics] = useState({ step: 1, maxShift: 0, visible: 1 });
   const [start, setStart] = useState(0);
   // Set while the shelf is being dragged, so letting go does not also open a file.
@@ -50,13 +59,14 @@ export default function Projects() {
       const step = slots[1] ? slots[1].offsetLeft - first.offsetLeft : first.offsetWidth;
       const maxShift = Math.max(0, track.scrollWidth - viewport.clientWidth);
       const visible = Math.max(1, Math.floor((viewport.clientWidth - first.offsetLeft) / step));
+      viewWidth.set(viewport.clientWidth);
       setMetrics({ step, maxShift, visible });
     };
     measure();
     const observer = new ResizeObserver(measure);
     if (viewportRef.current) observer.observe(viewportRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [viewWidth]);
 
   const maxStart = Math.ceil(metrics.maxShift / metrics.step);
   const clampStart = useCallback((value: number) => Math.min(Math.max(value, 0), maxStart), [maxStart]);
@@ -72,7 +82,7 @@ export default function Projects() {
   }, [start, clampStart, offsetFor, trackX, reduceMotion]);
 
   const slide = (direction: number) => {
-    setPeeked(null);
+    peeked.set(-1);
     setStart((current) => clampStart(current + direction * Math.max(1, metrics.visible - 1)));
   };
 
@@ -93,16 +103,44 @@ export default function Projects() {
   };
 
   // ---------- Peek and open ----------
-  const activate = (index: number, pointerType: string) => {
-    if (dragged.current) return;
-    // On touch screens the first tap only peeks, the second tap opens.
-    if (pointerType === "touch" && peeked !== index) {
-      setPeeked(index);
-      return;
-    }
-    setPeeked(null);
-    setOpened(index);
-  };
+  // These handlers are handed to every file and never change, so the files do not re-render for them.
+  const ensureVisibleRef = useRef(ensureVisible);
+  useEffect(() => {
+    ensureVisibleRef.current = ensureVisible;
+  });
+  const onFocusFile = useCallback((index: number) => ensureVisibleRef.current(index), []);
+  const registerButton = useCallback((index: number, el: HTMLButtonElement | null) => {
+    folderButtons.current[index] = el;
+  }, []);
+  const onPeekStart = useCallback(
+    (index: number) => {
+      if (openedRef.current === null && !dragged.current) peeked.set(index);
+    },
+    [peeked],
+  );
+  const onPeekEnd = useCallback(
+    (index: number) => {
+      // Letting go is delayed by one frame. Moving straight from one file to the next would otherwise pass through
+      // "no file" for an instant, which sends all the other files lighter and darker again for no reason.
+      requestAnimationFrame(() => {
+        if (peeked.get() === index) peeked.set(-1);
+      });
+    },
+    [peeked],
+  );
+  const activate = useCallback(
+    (index: number, pointerType: string) => {
+      if (dragged.current) return;
+      // On touch screens the first tap only peeks, the second tap opens.
+      if (pointerType === "touch" && peeked.get() !== index) {
+        peeked.set(index);
+        return;
+      }
+      peeked.set(-1);
+      setOpened(index);
+    },
+    [peeked],
+  );
 
   const close = () => {
     const index = opened;
@@ -147,6 +185,8 @@ export default function Projects() {
                     touchAction: "pan-y",
                     paddingLeft: "max(1.5rem, calc((100vw - 72rem) / 2 + 1.5rem))",
                     paddingRight: "max(1.5rem, calc((100vw - 72rem) / 2 + 1.5rem))",
+                    // The whole shelf moves as one layer, so sliding does not repaint the files.
+                    willChange: "transform",
                   }}
                   drag={opened === null ? "x" : false}
                   dragConstraints={{ left: -metrics.maxShift, right: 0 }}
@@ -154,7 +194,7 @@ export default function Projects() {
                   dragMomentum={false}
                   onDragStart={() => {
                     dragged.current = true;
-                    setPeeked(null);
+                    peeked.set(-1);
                   }}
                   onDragEnd={onDragEnd}
                 >
@@ -165,19 +205,15 @@ export default function Projects() {
                       item={item}
                       index={index}
                       total={shelfItems.length}
-                      hovered={peeked === index && opened === null}
-                      dimmed={(peeked !== null && peeked !== index) || (opened !== null && opened !== index)}
-                      shift={opened === null || opened === index ? 0 : index < opened ? -1 : 1}
-                      open={opened === index}
+                      peeked={peeked}
+                      opened={opened}
                       trackX={trackX}
-                      viewportRef={viewportRef}
-                      buttonRef={(el) => {
-                        folderButtons.current[index] = el;
-                      }}
-                      onPeekStart={() => opened === null && !dragged.current && setPeeked(index)}
-                      onPeekEnd={() => setPeeked((current) => (current === index ? null : current))}
-                      onActivate={(pointerType) => activate(index, pointerType)}
-                      onFocusFile={() => ensureVisible(index)}
+                      viewWidth={viewWidth}
+                      registerButton={registerButton}
+                      onPeekStart={onPeekStart}
+                      onPeekEnd={onPeekEnd}
+                      onActivate={activate}
+                      onFocusFile={onFocusFile}
                     />
                   ))}
                   <Bookend side="end" />

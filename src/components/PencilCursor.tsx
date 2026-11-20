@@ -28,23 +28,63 @@ const CONTENT =
   "h1, h2, h3, h4, h5, h6, p, li, .ruler, [data-shelf-slot], [data-keychain]";
 const CONTENT_MARGIN = 24; // px of clear space needed around the pencil tip
 
-const hasOwnText = (element: Element) =>
-  Array.from(element.childNodes).some((node) => node.nodeType === Node.TEXT_NODE && !!node.textContent?.trim());
+// ---------- Where the content is ----------
+// "Is there content near the pointer?" is answered from a list of rectangles. Asking the browser what is under the
+// pointer (hit testing) five times per frame was one of the most expensive things on the page, and it got worse
+// the more layers the page had. The list is rebuilt now and then, which is far cheaper.
+type Box = { l: number; t: number; r: number; b: number };
 
-// True when this spot of the page shows something (text, picture, button...) rather than empty space.
-const isContentAt = (px: number, py: number) => {
-  const element = document.elementFromPoint(px, py);
-  if (!element) return false;
-  return !!element.closest(CONTENT) || hasOwnText(element);
+const BOX_REFRESH_MS = 200; // how old the list may get while the mouse is moving
+let boxes: Box[] = [];
+let boxesAt = -Infinity;
+let boxesDirty = true;
+const markBoxesDirty = () => {
+  boxesDirty = true;
 };
 
-// Checks the tip and four spots around it, so the line also stays away from the edges of content.
-const nearContent = (px: number, py: number) =>
-  isContentAt(px, py) ||
-  isContentAt(px + CONTENT_MARGIN, py) ||
-  isContentAt(px - CONTENT_MARGIN, py) ||
-  isContentAt(px, py + CONTENT_MARGIN) ||
-  isContentAt(px, py - CONTENT_MARGIN);
+const collectBoxes = (): Box[] => {
+  const found: Box[] = [];
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const add = (element: Element) => {
+    // The pencil itself and its trail are not content.
+    if (element.closest("[data-pencil]")) return;
+    const rect = element.getBoundingClientRect();
+    // Skip hidden things, hairlines and anything far outside the screen.
+    if (rect.width < 2 || rect.height < 2) return;
+    if (rect.right < -CONTENT_MARGIN || rect.bottom < -CONTENT_MARGIN) return;
+    if (rect.left > width + CONTENT_MARGIN || rect.top > height + CONTENT_MARGIN) return;
+    found.push({
+      l: rect.left - CONTENT_MARGIN,
+      t: rect.top - CONTENT_MARGIN,
+      r: rect.right + CONTENT_MARGIN,
+      b: rect.bottom + CONTENT_MARGIN,
+    });
+  };
+  document.querySelectorAll(CONTENT).forEach(add);
+  // Anything that holds words of its own, such as a span or div with text in it.
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const seen = new Set<Element>();
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const parent = node.parentElement;
+    if (parent && !seen.has(parent) && node.textContent?.trim()) {
+      seen.add(parent);
+      add(parent);
+    }
+  }
+  return found;
+};
+
+// True when this spot is on, or within a few pixels of, text, a picture, a button and so on.
+const nearContent = (px: number, py: number, now: number) => {
+  if (boxesDirty || now - boxesAt > BOX_REFRESH_MS) {
+    boxes = collectBoxes();
+    boxesAt = now;
+    boxesDirty = false;
+  }
+  for (const box of boxes) if (px >= box.l && px <= box.r && py >= box.t && py <= box.b) return true;
+  return false;
+};
 
 type TrailPoint = { x: number; y: number; t: number; breakBefore: boolean };
 
@@ -88,10 +128,24 @@ export default function PencilCursor() {
 
     // ---------- Trail ----------
     let points: TrailPoint[] = [];
+    // Mouse positions that arrived since the last frame. They are handled together, once per frame.
+    let pending: [number, number][] = [];
     let frame = 0;
     let startNewLine = true;
     let overTextField = false;
+    let isShown = false;
     let dpr = 1;
+
+    // The line takes the page's text colour, so it shows on both light and dark backgrounds.
+    // It is read once, and again when the theme changes. Reading it on every frame forces the browser to
+    // recalculate styles in the middle of an animation.
+    let ink = "#1c1917";
+    const readInk = () => {
+      ink = getComputedStyle(root).getPropertyValue("--foreground").trim() || "#1c1917";
+    };
+    readInk();
+    const themeObserver = new MutationObserver(readInk);
+    themeObserver.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
 
     const resize = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -101,53 +155,62 @@ export default function PencilCursor() {
     };
     resize();
 
-    const draw = (now: number) => {
-      points = points.filter((point) => now - point.t < TRAIL_LIFETIME);
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      if (points.length < 2) {
-        frame = points.length ? requestAnimationFrame(draw) : 0;
-        return;
-      }
-
-      // The line takes the page's text colour, so it shows on both light and dark backgrounds.
-      const ink = getComputedStyle(root).getPropertyValue("--foreground").trim() || "#1c1917";
-      ctx.strokeStyle = ink;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      for (let i = 1; i < points.length; i++) {
-        const to = points[i];
-        if (to.breakBefore) continue;
-        const from = points[i - 1];
-        // Fresh end of the line is darker and a little thicker; the old end is thin and faint.
-        const life = 1 - (now - to.t) / TRAIL_LIFETIME;
-        ctx.globalAlpha = 0.7 * life * life;
-        ctx.lineWidth = TRAIL_WIDTH * (0.45 + 0.55 * life);
-        ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(to.x, to.y);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-      frame = requestAnimationFrame(draw);
-    };
-
-    const addPoint = (px: number, py: number) => {
+    const addPoint = (px: number, py: number, now: number) => {
       const last = points[points.length - 1];
       if (last && !startNewLine && Math.hypot(px - last.x, py - last.y) < TRAIL_MIN_STEP) return;
-      // On or near content: no line, and the next line starts fresh instead of joining across the gap.
-      if (nearContent(px, py)) {
-        startNewLine = true;
-        return;
-      }
       points.push({
         x: px + (Math.random() - 0.5) * 2 * TRAIL_WOBBLE,
         y: py + (Math.random() - 0.5) * 2 * TRAIL_WOBBLE,
-        t: performance.now(),
+        t: now,
         breakBefore: startNewLine,
       });
       startNewLine = false;
-      if (!frame) frame = requestAnimationFrame(draw);
+    };
+
+    const tick = (now: number) => {
+      frame = 0;
+
+      // The check "is this empty space?" asks the browser what is under the pointer, which is the costly
+      // part. A mouse can report hundreds of positions per second, so it runs once per frame, not once per move.
+      if (pending.length) {
+        const [lastX, lastY] = pending[pending.length - 1];
+        if (overTextField || nearContent(lastX, lastY, now)) {
+          // On or near content: no line, and the next line starts fresh instead of joining across the gap.
+          startNewLine = true;
+        } else {
+          for (const [px, py] of pending) addPoint(px, py, now);
+        }
+        pending = [];
+      }
+
+      points = points.filter((point) => now - point.t < TRAIL_LIFETIME);
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      if (points.length >= 2) {
+        ctx.strokeStyle = ink;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        for (let i = 1; i < points.length; i++) {
+          const to = points[i];
+          if (to.breakBefore) continue;
+          const from = points[i - 1];
+          // Fresh end of the line is darker and a little thicker; the old end is thin and faint.
+          const life = 1 - (now - to.t) / TRAIL_LIFETIME;
+          ctx.globalAlpha = 0.7 * life * life;
+          ctx.lineWidth = TRAIL_WIDTH * (0.45 + 0.55 * life);
+          ctx.beginPath();
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // Keep drawing while the line is still fading; stop when nothing is left.
+      if (points.length) frame = requestAnimationFrame(tick);
+    };
+    const ensureFrame = () => {
+      if (!frame) frame = requestAnimationFrame(tick);
     };
 
     // ---------- Pointer ----------
@@ -157,9 +220,20 @@ export default function PencilCursor() {
       y.set(event.clientY);
       // Set again in case something removed it (for example a hot reload during development).
       if (root.dataset.cursor !== "on") root.dataset.cursor = "on";
-      setShown(true);
+      if (!isShown) {
+        isShown = true;
+        setShown(true);
+      }
       // No line where the normal cursor is used (text fields).
-      if (!overTextField) addPoint(event.clientX, event.clientY);
+      if (overTextField) {
+        startNewLine = true;
+        return;
+      }
+      // Keep every position the mouse reported, so fast strokes stay smooth.
+      const reported = typeof event.getCoalescedEvents === "function" ? event.getCoalescedEvents() : [];
+      if (reported.length > 1) for (const e of reported) pending.push([e.clientX, e.clientY]);
+      else pending.push([event.clientX, event.clientY]);
+      ensureFrame();
     };
     const onOver = (event: PointerEvent) => {
       const target = event.target instanceof Element ? event.target : null;
@@ -171,6 +245,7 @@ export default function PencilCursor() {
     const onDown = (event: PointerEvent) => event.pointerType === "mouse" && setPressed(true);
     const onUp = () => setPressed(false);
     const onLeave = () => {
+      isShown = false;
       setShown(false);
       // The line starts fresh when the mouse comes back, instead of jumping across the screen.
       startNewLine = true;
@@ -182,9 +257,14 @@ export default function PencilCursor() {
     window.addEventListener("pointerup", onUp, { passive: true });
     window.addEventListener("blur", onUp);
     window.addEventListener("resize", resize);
+    // The list of content rectangles is out of date after scrolling or resizing.
+    window.addEventListener("scroll", markBoxesDirty, { passive: true, capture: true });
+    window.addEventListener("resize", markBoxesDirty);
     root.addEventListener("mouseleave", onLeave);
 
     return () => {
+      window.removeEventListener("scroll", markBoxesDirty, { capture: true });
+      window.removeEventListener("resize", markBoxesDirty);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerover", onOver);
       window.removeEventListener("pointerdown", onDown);
@@ -193,6 +273,7 @@ export default function PencilCursor() {
       window.removeEventListener("resize", resize);
       root.removeEventListener("mouseleave", onLeave);
       cancelAnimationFrame(frame);
+      themeObserver.disconnect();
       delete root.dataset.cursor;
       setShown(false);
     };
@@ -210,13 +291,17 @@ export default function PencilCursor() {
       <canvas
         ref={canvasRef}
         aria-hidden="true"
+        data-pencil
         className="pointer-events-none fixed inset-0 z-[999] h-screen w-screen"
       />
 
       <motion.div
         aria-hidden="true"
+        data-pencil
         className="pointer-events-none fixed left-0 top-0 z-[1000]"
-        style={{ x, y, marginLeft: -TIP_X }}
+        // Its own layer: moving the pencil is then only a change of position, and the browser does not have to
+        // work out again how every other layer on the page overlaps it on each mouse move.
+        style={{ x, y, marginLeft: -TIP_X, willChange: "transform" }}
         animate={{ opacity: visible ? 1 : 0 }}
         transition={{ duration: 0.15 }}
       >

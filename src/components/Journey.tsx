@@ -1,6 +1,7 @@
 "use client";
 
-import { MotionConfig, motion } from "framer-motion";
+import { useRef } from "react";
+import { MotionConfig, motion, useInView } from "framer-motion";
 import { Briefcase, GraduationCap } from "lucide-react";
 import Section from "./Section";
 import Reveal from "./Reveal";
@@ -59,9 +60,13 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
   // Only shrink the trigger area at the top and bottom. A sideways margin would put dots that sit near the
   // left edge of a phone outside the trigger area, so they would never appear.
   const view = { once: true, margin: "-80px 0px -80px 0px" } as const;
+  // The pulsing rings only run while this entry is on screen. A CSS animation keeps running when it is scrolled
+  // far out of sight, and every tick of it made the browser redo work, which slowed down the rest of the page.
+  const itemRef = useRef<HTMLLIElement>(null);
+  const onScreen = useInView(itemRef, { margin: "200px 0px 200px 0px" });
 
   return (
-    <li className="relative grid gap-4 pl-12 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-x-16 lg:pl-0">
+    <li ref={itemRef} className="relative grid gap-4 pl-12 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-x-16 lg:pl-0">
       {/* The line down to the next dot: a faint track, with the accent colour drawing over it */}
       <span
         aria-hidden="true"
@@ -107,7 +112,7 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
           variants={{ hidden: { scale: 0 }, shown: { scale: 1 } }}
           transition={{ type: "spring", stiffness: 260, damping: 15, delay: 0.1 }}
         >
-          {current && <span className="absolute inset-0 animate-ping rounded-full bg-accent/40 motion-reduce:hidden" />}
+          {current && onScreen && <span className="absolute inset-0 animate-ping rounded-full bg-accent/40 motion-reduce:hidden" />}
           <Icon className="relative h-4 w-4" />
         </motion.span>
       </motion.span>
@@ -121,7 +126,7 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
         {current && (
           <span className="mt-2 inline-flex items-center gap-2 rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-accent">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-70 motion-reduce:hidden" />
+              {onScreen && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-70 motion-reduce:hidden" />}
               <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
             </span>
             Current
