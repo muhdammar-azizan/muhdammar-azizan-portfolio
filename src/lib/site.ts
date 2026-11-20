@@ -13,9 +13,16 @@ export const siteConfig = {
   heroImage: "/images/profile-polaroid.jpg",
   // Memoji shown first in the hero; clicking it reveals the real photo.
   heroAvatar: "/images/profile-avatar-polaroid.jpg",
+  // Two short paragraphs for the About section. Text between ** ** is drawn with a highlighter pen.
   bio: [
-    "Placeholder: write a short introduction about yourself here.",
-    "Placeholder: add a second paragraph about your background and what drives you.",
+    "I'm Muhammad Ammar bin Azizan, a Software Engineering student at Universiti Malaysia Pahang Al-Sultan Abdullah (UMPSA). I enjoy **turning ideas into working software**, from the database and backend logic to the interface people actually use. I'm currently looking for an **internship and entry-level full-stack opportunities** where I can contribute, learn quickly and grow as an engineer.",
+    "What drives me is building things that are **genuinely useful**, especially for students and communities in Malaysia. I like working in a team, explaining technical ideas in a way anyone can follow, and **improving a little every day** through consistent habits. Outside of coding, I'm always reading and looking for new ideas to bring back into my work.",
+  ],
+  // Sticky notes beside the About paper. Each one repeats a short line from the paragraphs above.
+  aboutNotes: [
+    { label: "Looking for", text: "an internship and entry-level full-stack opportunities", color: "#fbe27a" },
+    { label: "Driven by", text: "building things that are genuinely useful", color: "#c5e8a0" },
+    { label: "Every day", text: "improving a little through consistent habits", color: "#a6d8f2" },
   ],
   // Phone number in international format without "+" or spaces, e.g. 60123456789.
   contact: {
