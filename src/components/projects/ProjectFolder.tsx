@@ -31,6 +31,11 @@ const EDGE_DIM = 0.3; // how much darker at the very edge
 const DIM = 0.28; // how much darker the other files get while one is peeked
 const BRIGHTEN = 0.08; // how much lighter the peeked file gets
 
+// Entrance of the files: time between one file and the next, and how many files take part in the staggering.
+// Files further along start together with the fifth one, so files that slide into view later do not wait long.
+const ENTER_STAGGER = 0.07;
+const ENTER_STAGGER_MAX = 4;
+
 // One easing for everything that moves by CSS transition: quick start, long soft landing, like the springs before.
 const SETTLE = "cubic-bezier(0.22, 1, 0.36, 1)";
 
@@ -189,6 +194,16 @@ function ProjectFolder({
         willChange: "transform",
       }}
     >
+      {/* Entrance: the file starts turned away, like a file in a drawer that has not been flipped to yet, and swings
+          upright. Files that are on screen do it one after another from the left. Once only. */}
+      <motion.div
+        className="absolute inset-0"
+        style={{ transformPerspective: 900, originX: 0 }}
+        initial={{ opacity: 0, rotateY: -75, y: 24 }}
+        whileInView={{ opacity: 1, rotateY: 0, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.5, delay: Math.min(index, ENTER_STAGGER_MAX) * ENTER_STAGGER, ease: [0.22, 1, 0.36, 1] }}
+      >
       <motion.div
         className="absolute inset-0"
         style={{ rotateY: leanRotate, originX: leanOrigin, transformPerspective: 900, willChange: "transform" }}
@@ -327,6 +342,7 @@ function ProjectFolder({
             style={{ clipPath: clip, transition: `opacity 0.35s ${SETTLE}` }}
           />
         </button>
+      </motion.div>
       </motion.div>
     </div>
   );

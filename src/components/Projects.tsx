@@ -172,7 +172,8 @@ export default function Projects() {
         </div>
 
         <LayoutGroup id="project-files">
-          <Reveal delay={0.1}>
+          {/* No fade-in for the whole shelf: each file makes its own entrance instead */}
+          <div>
             <div className="relative">
               {/* Visible window of the shelf. Clips sideways only, so peeking papers can rise above it. */}
               <div ref={viewportRef} className="overflow-x-clip pb-8 pt-20">
@@ -224,7 +225,7 @@ export default function Projects() {
               <ShelfArrow side="left" disabled={atStart} onClick={() => slide(-1)} />
               <ShelfArrow side="right" disabled={atEnd} onClick={() => slide(1)} />
             </div>
-          </Reveal>
+          </div>
 
           {/* Handwritten counter of the files in view */}
           <p className="mt-2 text-center font-hand text-lg text-foreground/60" aria-live="polite">
