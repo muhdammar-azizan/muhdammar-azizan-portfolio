@@ -180,6 +180,12 @@ html[data-intro="play"] {
   overflow: hidden;
 }
 
+/* The overlay is part of the server HTML, so before the script is ready its text would sit there
+   frozen. Keep the text hidden (the backdrop still covers the page) until the animation starts. */
+html[data-intro="play"]:not([data-intro-ready]) .intro-content {
+  visibility: hidden;
+}
+
 html[data-intro="play"] [data-hello-word] {
   visibility: hidden;
 }

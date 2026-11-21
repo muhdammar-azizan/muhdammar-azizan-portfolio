@@ -79,6 +79,9 @@ export default function Intro() {
         // 2. A short pause so the word can be read.
         .addLabel("break", "+=0.45");
 
+      // The starting state is applied now, so the text can be shown without a frozen flash.
+      html.dataset.introReady = "1";
+
       // 3. Break apart and reshape into "Hello". Target positions are measured at this moment,
       //    after the hero has finished its own entrance.
       tl.add(() => ctx.add(() => {
@@ -158,6 +161,7 @@ export default function Intro() {
     });
 
     return () => {
+      delete html.dataset.introReady;
       ctx.revert();
     };
   }, []);
@@ -182,7 +186,7 @@ export default function Intro() {
     >
       <div data-intro-backdrop className="absolute inset-0 bg-background" />
 
-      <div className="relative flex flex-col items-center px-6 text-foreground">
+      <div className="intro-content relative flex flex-col items-center px-6 text-foreground">
         <p data-intro-name className="font-clash text-base font-medium uppercase tracking-[0.35em] text-foreground/70 sm:text-lg">
           {siteConfig.name.split(" ")[1]}
         </p>
@@ -199,7 +203,7 @@ export default function Intro() {
           event.stopPropagation();
           skipIntro();
         }}
-        className="absolute bottom-6 right-6 rounded-full border border-foreground/20 px-4 py-1.5 text-sm text-foreground/70 transition hover:border-foreground/50 hover:text-foreground sm:bottom-8 sm:right-8"
+        className="intro-content absolute bottom-6 right-6 rounded-full border border-foreground/20 px-4 py-1.5 text-sm text-foreground/70 transition hover:border-foreground/50 hover:text-foreground sm:bottom-8 sm:right-8"
       >
         Skip
       </button>
