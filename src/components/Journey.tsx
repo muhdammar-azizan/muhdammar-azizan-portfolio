@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef } from "react";
-import { MotionConfig, motion, useInView } from "framer-motion";
+import { MotionConfig, motion } from "framer-motion";
 import Image from "next/image";
 import Section from "./Section";
 import Reveal from "./Reveal";
@@ -59,13 +58,9 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
   // Only shrink the trigger area at the top and bottom. A sideways margin would put dots that sit near the
   // left edge of a phone outside the trigger area, so they would never appear.
   const view = { once: true, margin: "-80px 0px -80px 0px" } as const;
-  // The pulsing rings only run while this entry is on screen. A CSS animation keeps running when it is scrolled
-  // far out of sight, and every tick of it made the browser redo work, which slowed down the rest of the page.
-  const itemRef = useRef<HTMLLIElement>(null);
-  const onScreen = useInView(itemRef, { margin: "200px 0px 200px 0px" });
 
   return (
-    <li ref={itemRef} className="relative grid gap-4 pl-[76px] lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-x-16 lg:pl-0">
+    <li className="relative grid gap-4 pl-[76px] lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-x-16 lg:pl-0">
       {/* The line down to the next dot: a faint track, with the accent colour drawing over it */}
       <span
         aria-hidden="true"
@@ -139,13 +134,11 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
         </p>
         <p className="mt-0.5 text-sm text-foreground/60">{kindLabel}</p>
         {current && (
-          <span className="mt-2 inline-flex items-center gap-2 rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-            <span className="relative flex h-2 w-2">
-              {onScreen && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-70 motion-reduce:hidden" />}
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-            </span>
+          /* A quiet text label with a short rule, no pill, dot or animation. */
+          <p className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-accent">
+            <span aria-hidden="true" className="h-px w-5 bg-accent" />
             Current
-          </span>
+          </p>
         )}
       </div>
 
