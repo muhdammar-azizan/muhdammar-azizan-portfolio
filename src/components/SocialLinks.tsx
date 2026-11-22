@@ -10,7 +10,16 @@ const WhatsAppIcon = () => (
 );
 
 const InstagramIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-5 w-5 group-hover:[stroke:url(#instagram-gradient)]"
+    aria-hidden="true"
+  >
     <rect x="3" y="3" width="18" height="18" rx="5" />
     <circle cx="12" cy="12" r="4" />
     <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
@@ -30,37 +39,56 @@ const GitHubIcon = () => (
 );
 
 const links = [
-  { label: "GitHub", href: siteConfig.contact.github, icon: <GitHubIcon /> },
+  { label: "GitHub", href: siteConfig.contact.github, icon: <GitHubIcon />, brand: "#181717" },
   {
     label: "WhatsApp",
     href: `https://wa.me/${siteConfig.contact.whatsapp}`,
     icon: <WhatsAppIcon />,
+    brand: "#25D366",
   },
-  { label: "Instagram", href: siteConfig.contact.instagram, icon: <InstagramIcon /> },
-  { label: "LinkedIn", href: siteConfig.contact.linkedin, icon: <LinkedInIcon /> },
+  { label: "Instagram", href: siteConfig.contact.instagram, icon: <InstagramIcon />, brand: "#E4405F" },
+  { label: "LinkedIn", href: siteConfig.contact.linkedin, icon: <LinkedInIcon />, brand: "#0A66C2" },
   {
     label: "Email",
     href: `mailto:${siteConfig.contact.email}`,
     icon: <Mail className="h-5 w-5" aria-hidden="true" />,
+    brand: "#0f766e",
   },
 ];
 
 export default function SocialLinks() {
   return (
-    <ul className="flex items-center gap-3">
-      {links.map((link) => (
-        <li key={link.label}>
-          <a
-            href={link.href}
-            target={link.href.startsWith("http") ? "_blank" : undefined}
-            rel="noopener noreferrer"
-            aria-label={link.label}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-current/25 text-current transition hover:-translate-y-1 hover:border-accent hover:text-accent"
-          >
-            {link.icon}
-          </a>
-        </li>
-      ))}
-    </ul>
+    <>
+      {/* The official Instagram gradient, used by the icon's strokes on hover */}
+      <svg width="0" height="0" className="absolute" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="instagram-gradient" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stopColor="#FEDA75" />
+            <stop offset="0.3" stopColor="#FA7E1E" />
+            <stop offset="0.55" stopColor="#D62976" />
+            <stop offset="0.8" stopColor="#962FBF" />
+            <stop offset="1" stopColor="#4F5BD5" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <ul className="flex items-center gap-3">
+        {links.map((link) => (
+          <li key={link.label}>
+            {/* Plain colour at rest; the brand's own colour appears on hover */}
+            <a
+              href={link.href}
+              target={link.href.startsWith("http") ? "_blank" : undefined}
+              rel="noopener noreferrer"
+              aria-label={link.label}
+              style={{ "--brand": link.brand } as React.CSSProperties}
+              className="group flex h-11 w-11 items-center justify-center rounded-full border border-current/25 text-current transition duration-200 hover:-translate-y-1 hover:border-(--brand) hover:bg-white/70 hover:text-(--brand)"
+            >
+              {link.icon}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

@@ -169,11 +169,25 @@ html.theme-switching *::after {
 
 /* The footer uses the inverted theme colours, so the accent needs the opposite shade to stay readable. */
 .footer-invert {
-  --accent: #5eead4;
+  /* Light theme: a beige only a little darker than the page, with dark text. The footer
+     classes use bg-foreground and text-background, so the two colours are swapped here. */
+  --foreground: #e3d7c1;
+  --background: #1c1917;
+  --accent: #0f766e;
+  /* Tailwind colour utilities read the --color-* names, so those are set too. */
+  --color-foreground: #e3d7c1;
+  --color-background: #1c1917;
+  --color-accent: #0f766e;
 }
 
+/* Dark theme: the footer stays light, the opposite of the dark page. */
 :root[data-theme="dark"] .footer-invert {
+  --foreground: #e8ecf5;
+  --background: #161616;
   --accent: #0f766e;
+  --color-foreground: #e8ecf5;
+  --color-background: #161616;
+  --color-accent: #0f766e;
 }
 
 /* Light creases for a sheet that has been folded and opened again. Kept faint on purpose. */
