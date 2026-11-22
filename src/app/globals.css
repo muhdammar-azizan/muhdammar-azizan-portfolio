@@ -167,6 +167,15 @@ html.theme-switching *::after {
   }
 }
 
+/* The footer uses the inverted theme colours, so the accent needs the opposite shade to stay readable. */
+.footer-invert {
+  --accent: #5eead4;
+}
+
+:root[data-theme="dark"] .footer-invert {
+  --accent: #0f766e;
+}
+
 /* Light creases for a sheet that has been folded and opened again. Kept faint on purpose. */
 .paper-creases {
   background-image:

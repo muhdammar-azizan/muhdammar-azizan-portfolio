@@ -1,4 +1,5 @@
 import { Mail } from "lucide-react";
+import { siGithub } from "simple-icons";
 import { siteConfig } from "@/lib/site";
 
 // Brand icons are inline SVGs because lucide-react does not ship brand logos.
@@ -22,7 +23,14 @@ const LinkedInIcon = () => (
   </svg>
 );
 
+const GitHubIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5" aria-hidden="true">
+    <path d={siGithub.path} />
+  </svg>
+);
+
 const links = [
+  { label: "GitHub", href: siteConfig.contact.github, icon: <GitHubIcon /> },
   {
     label: "WhatsApp",
     href: `https://wa.me/${siteConfig.contact.whatsapp}`,
@@ -47,7 +55,7 @@ export default function SocialLinks() {
             target={link.href.startsWith("http") ? "_blank" : undefined}
             rel="noopener noreferrer"
             aria-label={link.label}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-foreground/15 text-foreground/80 transition hover:-translate-y-1 hover:border-accent hover:text-accent"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-current/25 text-current transition hover:-translate-y-1 hover:border-accent hover:text-accent"
           >
             {link.icon}
           </a>
