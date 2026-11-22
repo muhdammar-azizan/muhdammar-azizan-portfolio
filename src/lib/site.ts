@@ -228,6 +228,10 @@ export type JourneyEntry = {
   kind: "experience" | "education";
   title: string;
   organisation: string;
+  // Logo shown on the pinned paper beside the timeline, a file in public/logos (for example "/logos/cukrudev.png").
+  // Until the file is added, the short text in `mark` is drawn on the paper instead.
+  logo?: string;
+  mark: string;
   // Shown beside "Experience", for example "Part Time".
   type?: string;
   // Dates are plain text. Use "Present" as the end for something that is still going on.
@@ -247,6 +251,7 @@ export const journey: JourneyEntry[] = [
     kind: "experience",
     title: "Partner and Logistics Manager",
     organisation: "CukruDev Solutions",
+    mark: "CD",
     type: "Part Time",
     start: "[START MONTH YEAR]",
     end: "Present",
@@ -258,6 +263,7 @@ export const journey: JourneyEntry[] = [
     kind: "education",
     title: "Bachelor of Software Engineering student",
     organisation: "Universiti Malaysia Pahang Al-Sultan Abdullah (UMPSA), Faculty of Computing",
+    mark: "UMPSA",
     start: "[START YEAR]",
     end: "Present",
     story:
@@ -268,6 +274,7 @@ export const journey: JourneyEntry[] = [
     kind: "education",
     title: "Matriculation student",
     organisation: "Kolej Matrikulasi Kedah",
+    mark: "KMK",
     start: "[START YEAR]",
     end: "[END YEAR]",
     // Optional: add one sentence about your stream, a club or a memory from KMK, right after "under pressure."

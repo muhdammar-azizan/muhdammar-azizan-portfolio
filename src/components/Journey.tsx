@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { MotionConfig, motion, useInView } from "framer-motion";
-import { Briefcase, GraduationCap } from "lucide-react";
+import Image from "next/image";
 import Section from "./Section";
 import Reveal from "./Reveal";
 import { journey, journeyIntro, type JourneyEntry } from "@/lib/site";
@@ -13,9 +13,9 @@ const TAG_TILTS = [-2, 1.5, -1];
 const CARD_TILTS = [-0.5, 0.45, -0.35];
 
 // The vertical line and its dots sit in the same spot on every entry (px from the left edge of the entry).
-const RAIL = "left-[18px] lg:left-[232px]";
-const NODE_SIZE = 36;
-const NODE_TOP = 24;
+const RAIL = "left-[30px] lg:left-[232px]";
+const NODE_SIZE = 60;
+const NODE_TOP = 14;
 const NODE_CENTER = NODE_TOP + NODE_SIZE / 2;
 // Space between two entries (gap-12 = 3rem = 48px). The line runs on to the centre of the next dot.
 const ENTRY_GAP = 48;
@@ -54,7 +54,6 @@ function DatePart({ text }: { text: string }) {
 
 function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; last: boolean }) {
   const current = entry.end === "Present";
-  const Icon = entry.kind === "experience" ? Briefcase : GraduationCap;
   const tilt = CARD_TILTS[index % CARD_TILTS.length];
   const kindLabel = entry.kind === "experience" ? `Experience${entry.type ? ` · ${entry.type}` : ""}` : "Education";
   // Only shrink the trigger area at the top and bottom. A sideways margin would put dots that sit near the
@@ -66,7 +65,7 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
   const onScreen = useInView(itemRef, { margin: "200px 0px 200px 0px" });
 
   return (
-    <li ref={itemRef} className="relative grid gap-4 pl-12 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-x-16 lg:pl-0">
+    <li ref={itemRef} className="relative grid gap-4 pl-[76px] lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-x-16 lg:pl-0">
       {/* The line down to the next dot: a faint track, with the accent colour drawing over it */}
       <span
         aria-hidden="true"
@@ -96,9 +95,8 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
         />
       )}
 
-      {/* Dot with the kind of entry; the current one is filled and pulses */}
+      {/* The logo of the place, on a small sheet of paper nailed to the line; the current one pulses */}
       <motion.span
-        aria-hidden="true"
         className={`absolute z-10 -translate-x-1/2 ${RAIL}`}
         style={{ top: NODE_TOP, width: NODE_SIZE, height: NODE_SIZE }}
         initial="hidden"
@@ -106,14 +104,30 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
         viewport={view}
       >
         <motion.span
-          className={`flex h-full w-full items-center justify-center rounded-full border ${
-            current ? "relative border-accent bg-accent text-accent-contrast" : "border-foreground/25 bg-background text-foreground"
-          }`}
-          variants={{ hidden: { scale: 0 }, shown: { scale: 1 } }}
+          className="relative block h-full w-full"
+          variants={{ hidden: { scale: 0, rotate: -20 }, shown: { scale: 1, rotate: index % 2 ? 4 : -4 } }}
           transition={{ type: "spring", stiffness: 260, damping: 15, delay: 0.1 }}
         >
-          {current && onScreen && <span className="absolute inset-0 animate-ping rounded-full bg-accent/40 motion-reduce:hidden" />}
-          <Icon className="relative h-4 w-4" />
+          {current && onScreen && <span aria-hidden="true" className="absolute -inset-1 animate-ping rounded-md bg-accent/40 motion-reduce:hidden" />}
+          <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-[3px] bg-[#fdfbf4] p-2 text-[#1f2a44] shadow-[0_6px_10px_-3px_rgba(40,25,10,0.45)] ring-1 ring-black/10">
+            <span aria-hidden="true" className="paper-grain pointer-events-none absolute inset-0 opacity-30 mix-blend-multiply" />
+            {entry.logo ? (
+              <Image src={entry.logo} alt={`${entry.organisation} logo`} width={48} height={48} className="relative h-full w-full object-contain" />
+            ) : (
+              <span aria-hidden="true" className="relative font-clash text-[13px] font-semibold leading-none tracking-tight">
+                {entry.mark}
+              </span>
+            )}
+          </span>
+          {/* The nail */}
+          <span
+            aria-hidden="true"
+            className="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full"
+            style={{
+              background: "radial-gradient(circle at 35% 30%, #ffffffcc 0 15%, #9aa0a8 45%, #4a4f57 100%)",
+              boxShadow: "0 2px 3px rgba(0,0,0,0.45)",
+            }}
+          />
         </motion.span>
       </motion.span>
 
