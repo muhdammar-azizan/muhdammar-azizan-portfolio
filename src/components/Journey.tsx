@@ -4,6 +4,7 @@ import { MotionConfig, motion } from "framer-motion";
 import Image from "next/image";
 import Section from "./Section";
 import Reveal from "./Reveal";
+import ActivityTimeline from "./journey/ActivityTimeline";
 import { journey, journeyIntro, type JourneyEntry } from "@/lib/site";
 
 // Sticker colours and tilts, repeated down the list so no two neighbours look the same.
@@ -179,6 +180,8 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
             </motion.li>
           ))}
         </ul>
+
+        {entry.activities && entry.activities.length > 0 && <ActivityTimeline activities={entry.activities} />}
       </motion.article>
     </li>
   );

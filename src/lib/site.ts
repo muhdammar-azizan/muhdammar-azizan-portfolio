@@ -240,6 +240,18 @@ export type JourneyEntry = {
   story: string;
   // Two or three short tags shown as stickers under the story.
   highlights: string[];
+  // Optional short list of activities shown under the card, each with a stack of photo papers.
+  activities?: Activity[];
+};
+
+export type Activity = {
+  date: string;
+  title: string;
+  // One or two sentences.
+  detail: string;
+  // Each photo is one paper in the stack. `src` is an image in public (for example "/images/activities/launch-1.jpg");
+  // without it a placeholder is drawn. The caption is written on the paper.
+  photos: { src?: string; caption: string }[];
 };
 
 export const journeyIntro =
@@ -259,6 +271,27 @@ export const journey: JourneyEntry[] = [
     story:
       "CukruDev Solutions is a registered company I run in partnership with my teammates, built alongside our studies. We take on website projects for clients, and we also build our own digital products aimed at helping Malaysian students. As Logistics Manager, I keep the work organised: planning tasks, coordinating deadlines and resources across the team, and making sure what we promise to clients is actually delivered. I also contribute as a software engineer, so I see both how a product is built and how a business keeps running behind it.",
     highlights: ["Teamwork", "Operations and Planning", "Client Delivery"],
+    // TODO: dummy activities. Replace with the real ones and add photos (any number per activity).
+    activities: [
+      {
+        date: "[MONTH YEAR]",
+        title: "Client website launch",
+        detail: "Planned the timeline with the team and handed over a finished website to our first client.",
+        photos: [{ caption: "Launch day" }, { caption: "Final review" }, { caption: "Handover" }],
+      },
+      {
+        date: "[MONTH YEAR]",
+        title: "Team planning sprint",
+        detail: "Set up a weekly task board so every member knew their deadlines and what was blocking them.",
+        photos: [{ caption: "Whiteboard" }, { caption: "Task board" }, { caption: "Team meeting" }, { caption: "Weekly check-in" }],
+      },
+      {
+        date: "[MONTH YEAR]",
+        title: "Student product beta test",
+        detail: "Ran a small beta with students to collect feedback before the public release.",
+        photos: [{ caption: "Beta session" }, { caption: "Feedback notes" }],
+      },
+    ],
   },
   {
     kind: "education",
