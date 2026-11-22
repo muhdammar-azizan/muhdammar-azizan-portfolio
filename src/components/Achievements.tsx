@@ -53,12 +53,14 @@ export default function Achievements() {
           ))}
         </div>
 
-        <div className="cork rounded-2xl p-6 pt-10 sm:p-10 sm:pt-12">
-          <ul className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-            {achievements.map((item, index) => (
-              <Card key={item.title} item={item} index={index} />
-            ))}
-          </ul>
+        <div className="cork-frame">
+          <div className="cork p-6 pt-10 sm:p-10 sm:pt-12">
+            <ul className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+              {achievements.map((item, index) => (
+                <Card key={item.title} item={item} index={index} />
+              ))}
+            </ul>
+          </div>
         </div>
       </Section>
     </MotionConfig>
