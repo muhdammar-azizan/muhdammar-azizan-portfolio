@@ -108,7 +108,8 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
           variants={{ hidden: { scale: 0, rotate: -20 }, shown: { scale: 1, rotate: index % 2 ? 4 : -4 } }}
           transition={{ type: "spring", stiffness: 260, damping: 15, delay: 0.1 }}
         >
-          {current && onScreen && <span aria-hidden="true" className="absolute -inset-1 animate-ping rounded-md bg-accent/15 motion-reduce:hidden" />}
+          {/* The current place gets a calm, still accent ring instead of a blinking one */}
+          {current && <span aria-hidden="true" className="absolute -inset-1 rounded-md ring-2 ring-accent/50" />}
           <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-[3px] bg-[#fdfbf4] p-2 text-[#1f2a44] shadow-[0_6px_10px_-3px_rgba(40,25,10,0.45)] ring-1 ring-black/10">
             <span aria-hidden="true" className="paper-grain pointer-events-none absolute inset-0 opacity-30 mix-blend-multiply" />
             {entry.logo ? (
