@@ -3,7 +3,6 @@
 import { useRef } from "react";
 import { useInView } from "framer-motion";
 import { Database, Network, Sparkles, type LucideIcon } from "lucide-react";
-import Section from "./Section";
 import Reveal from "./Reveal";
 import { skills } from "@/lib/site";
 import { techIcon } from "@/lib/tech";
@@ -53,13 +52,13 @@ function SkillIcon({ name }: { name: string }) {
 // Hover colours, used one after another so neighbouring tiles differ.
 const TILE_COLORS = ["#c8f23a", "#8f4cf0", "#b9a7ec"];
 
-// Each row shows its tiles twice in a row (and the track holds two such sets), so the loop never shows a gap.
+// Each row repeats its tiles three times (and the track holds two such sets, so even a 4K screen is always filled), so the loop never shows a gap.
 function Tile({ name, index }: { name: string; index: number }) {
   return (
     <li className="skill-tile group relative shrink-0" style={{ "--tile": TILE_COLORS[index % TILE_COLORS.length] } as React.CSSProperties}>
       {/* The coloured side of the tile: it shows below and to the right when the tile lifts */}
       <span aria-hidden="true" className="skill-tile-side" />
-      <span className="skill-tile-face flex h-[76px] items-center justify-center gap-3 border border-foreground/15 bg-background px-7 text-[15px] font-medium whitespace-nowrap text-foreground">
+      <span className="skill-tile-face flex h-[76px] items-center justify-center gap-3 border border-foreground bg-background px-7 text-[15px] font-medium whitespace-nowrap text-foreground">
         <SkillIcon name={name} />
         {name}
       </span>
@@ -68,7 +67,7 @@ function Tile({ name, index }: { name: string; index: number }) {
 }
 
 function Row({ items, direction, live }: { items: string[]; direction: "right" | "left"; live: boolean }) {
-  const repeated = [...items, ...items];
+  const repeated = [...items, ...items, ...items];
   return (
     <div className="marquee overflow-x-clip py-3" data-live={live} data-direction={direction}>
       <div className="marquee-track">
@@ -95,13 +94,23 @@ export default function Skills() {
   const middle = Math.ceil(skills.length / 2);
 
   return (
-    <Section id="skills" title="Skills">
+    // The section is as wide as the screen, so the rows run edge to edge on any monitor.
+    // Only the heading is kept inside the usual page width.
+    <section id="skills" className="scroll-mt-16 overflow-x-clip py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        <Reveal>
+          <h2 className="mb-10 text-3xl font-bold tracking-tight sm:text-4xl">
+            Skills<span className="text-accent">.</span>
+          </h2>
+        </Reveal>
+      </div>
+
       <Reveal>
-        <div ref={ref} className="skill-rows -mx-6 flex flex-col gap-2">
+        <div ref={ref} className="skill-rows flex flex-col gap-2">
           <Row items={skills.slice(0, middle)} direction="right" live={live} />
           <Row items={skills.slice(middle)} direction="left" live={live} />
         </div>
       </Reveal>
-    </Section>
+    </section>
   );
 }
