@@ -66,13 +66,19 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
       <span
         aria-hidden="true"
         className={`absolute w-px -translate-x-1/2 bg-foreground/15 ${RAIL}`}
-        style={{ top: NODE_CENTER, bottom: last ? 0 : -(ENTRY_GAP + NODE_CENTER) }}
+        style={{
+          top: NODE_CENTER,
+          bottom: last ? 0 : -(ENTRY_GAP + NODE_CENTER),
+        }}
       />
       {/* The wrapper never changes size, so it is always seen by the scroll trigger; only the inner bar grows */}
       <motion.span
         aria-hidden="true"
         className={`absolute w-[2px] -translate-x-1/2 ${RAIL}`}
-        style={{ top: NODE_CENTER, bottom: last ? 0 : -(ENTRY_GAP + NODE_CENTER) }}
+        style={{
+          top: NODE_CENTER,
+          bottom: last ? 0 : -(ENTRY_GAP + NODE_CENTER),
+        }}
         initial="hidden"
         whileInView="shown"
         viewport={{ once: true, margin: "-25% 0px -25% 0px" }}
@@ -101,8 +107,16 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
       >
         <motion.span
           className="relative block h-full w-full"
-          variants={{ hidden: { scale: 0, rotate: -20 }, shown: { scale: 1, rotate: index % 2 ? 4 : -4 } }}
-          transition={{ type: "spring", stiffness: 260, damping: 15, delay: 0.1 }}
+          variants={{
+            hidden: { scale: 0, rotate: -20 },
+            shown: { scale: 1, rotate: index % 2 ? 4 : -4 },
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 260,
+            damping: 15,
+            delay: 0.1,
+          }}
         >
           {/* The current place gets a calm, still accent ring instead of a blinking one */}
           {current && <span aria-hidden="true" className="absolute -inset-1 rounded-md ring-2 ring-accent/50" />}
@@ -143,46 +157,64 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
         )}
       </div>
 
-      {/* The paper card */}
-      <motion.article
-        className="relative rounded-[3px] bg-[#fdfbf4] p-6 text-[#2a2f3a] shadow-[0_18px_40px_-18px_rgba(40,25,10,0.45)] sm:p-8"
-        initial={{ opacity: 0, y: 36, rotate: tilt * 3 }}
-        whileInView={{ opacity: 1, y: 0, rotate: tilt }}
-        whileHover={{ y: -4, rotate: 0, transition: { type: "spring", stiffness: 300, damping: 22 } }}
-        viewport={view}
-        transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
-      >
-        {/* Tape, on alternating corners */}
-        <span
-          aria-hidden="true"
-          className={`absolute -top-3 z-10 h-6 w-20 bg-[#f3ecd2]/85 shadow-sm ${
-            index % 2 ? "right-8 rotate-[5deg]" : "left-8 -rotate-6"
-          }`}
-        />
-        <span aria-hidden="true" className="paper-grain pointer-events-none absolute inset-0 opacity-35 mix-blend-multiply" />
+      {/* The paper card, with the activity papers under it */}
+      <div className="flex min-w-0 flex-col gap-10">
+        <motion.article
+          className="relative rounded-[3px] bg-[#fdfbf4] p-6 text-[#2a2f3a] shadow-[0_18px_40px_-18px_rgba(40,25,10,0.45)] sm:p-8"
+          initial={{ opacity: 0, y: 36, rotate: tilt * 3 }}
+          whileInView={{ opacity: 1, y: 0, rotate: tilt }}
+          whileHover={{
+            y: -4,
+            rotate: 0,
+            transition: { type: "spring", stiffness: 300, damping: 22 },
+          }}
+          viewport={view}
+          transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
+        >
+          {/* Tape, on alternating corners */}
+          <span
+            aria-hidden="true"
+            className={`absolute -top-3 z-10 h-6 w-20 bg-[#f3ecd2]/85 shadow-sm ${index % 2 ? "right-8 rotate-[5deg]" : "left-8 -rotate-6"}`}
+          />
+          <span aria-hidden="true" className="paper-grain pointer-events-none absolute inset-0 opacity-35 mix-blend-multiply" />
 
-        <h3 className="relative font-clash text-2xl font-semibold leading-tight text-[#1f2a44] sm:text-[1.7rem]">{entry.title}</h3>
-        <p className="relative mt-1.5 text-base font-medium text-[#0f6b64]">{entry.organisation}</p>
-        <p className="relative mt-4 text-[15.5px] leading-[1.75] text-[#2a2f3a]/85 sm:text-base">{entry.story}</p>
+          <h3 className="relative font-clash text-2xl font-semibold leading-tight text-[#1f2a44] sm:text-[1.7rem]">{entry.title}</h3>
+          <p className="relative mt-1.5 text-base font-medium text-[#0f6b64]">{entry.organisation}</p>
+          <p className="relative mt-4 text-[15.5px] leading-[1.75] text-[#2a2f3a]/85 sm:text-base">{entry.story}</p>
 
-        <ul className="relative mt-5 flex flex-wrap gap-2.5">
-          {entry.highlights.map((tag, i) => (
-            <motion.li
-              key={tag}
-              className="paper-grain rounded-[2px] px-3 py-1.5 font-hand text-[15px] font-bold text-[#3a3122] shadow-[0_2px_4px_-1px_rgba(40,25,10,0.35)]"
-              style={{ backgroundColor: TAG_COLORS[i % TAG_COLORS.length] }}
-              initial={{ opacity: 0, scale: 0.6, rotate: TAG_TILTS[i % TAG_TILTS.length] * 3 }}
-              whileInView={{ opacity: 1, scale: 1, rotate: TAG_TILTS[i % TAG_TILTS.length] }}
-              viewport={view}
-              transition={{ type: "spring", stiffness: 200, damping: 14, delay: 0.45 + i * 0.12 }}
-            >
-              {tag}
-            </motion.li>
-          ))}
-        </ul>
+          <ul className="relative mt-5 flex flex-wrap gap-2.5">
+            {entry.highlights.map((tag, i) => (
+              <motion.li
+                key={tag}
+                className="paper-grain rounded-[2px] px-3 py-1.5 font-hand text-[15px] font-bold text-[#3a3122] shadow-[0_2px_4px_-1px_rgba(40,25,10,0.35)]"
+                style={{ backgroundColor: TAG_COLORS[i % TAG_COLORS.length] }}
+                initial={{
+                  opacity: 0,
+                  scale: 0.6,
+                  rotate: TAG_TILTS[i % TAG_TILTS.length] * 3,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  scale: 1,
+                  rotate: TAG_TILTS[i % TAG_TILTS.length],
+                }}
+                viewport={view}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 14,
+                  delay: 0.45 + i * 0.12,
+                }}
+              >
+                {tag}
+              </motion.li>
+            ))}
+          </ul>
+        </motion.article>
 
+        {/* Activities are their own papers below the card, not part of it */}
         {entry.activities && entry.activities.length > 0 && <ActivityTimeline activities={entry.activities} />}
-      </motion.article>
+      </div>
     </li>
   );
 }
