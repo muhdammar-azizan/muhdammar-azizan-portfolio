@@ -108,7 +108,7 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
           variants={{ hidden: { scale: 0, rotate: -20 }, shown: { scale: 1, rotate: index % 2 ? 4 : -4 } }}
           transition={{ type: "spring", stiffness: 260, damping: 15, delay: 0.1 }}
         >
-          {current && onScreen && <span aria-hidden="true" className="absolute -inset-1 animate-ping rounded-md bg-accent/40 motion-reduce:hidden" />}
+          {current && onScreen && <span aria-hidden="true" className="absolute -inset-1 animate-ping rounded-md bg-accent/15 motion-reduce:hidden" />}
           <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-[3px] bg-[#fdfbf4] p-2 text-[#1f2a44] shadow-[0_6px_10px_-3px_rgba(40,25,10,0.45)] ring-1 ring-black/10">
             <span aria-hidden="true" className="paper-grain pointer-events-none absolute inset-0 opacity-30 mix-blend-multiply" />
             {entry.logo ? (
@@ -132,7 +132,7 @@ function Entry({ entry, index, last }: { entry: JourneyEntry; index: number; las
       </motion.span>
 
       {/* Dates and kind of entry (above the card on small screens, to the left of the line on large ones) */}
-      <div className="lg:pt-[26px] lg:text-right">
+      <div className="lg:pr-12 lg:pt-[26px] lg:text-right">
         <p className="font-hand text-xl font-bold leading-snug text-foreground">
           <DatePart text={entry.start} /> to <DatePart text={entry.end} />
         </p>

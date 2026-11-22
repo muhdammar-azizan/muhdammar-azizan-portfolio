@@ -252,6 +252,7 @@ export const journey: JourneyEntry[] = [
     title: "Partner and Logistics Manager",
     organisation: "CukruDev Solutions",
     mark: "CD",
+    logo: "/logos/cukrudev.png",
     type: "Part Time",
     start: "[START MONTH YEAR]",
     end: "Present",
@@ -264,6 +265,7 @@ export const journey: JourneyEntry[] = [
     title: "Bachelor of Software Engineering student",
     organisation: "Universiti Malaysia Pahang Al-Sultan Abdullah (UMPSA), Faculty of Computing",
     mark: "UMPSA",
+    logo: "/logos/umpsa.png",
     start: "[START YEAR]",
     end: "Present",
     story:
@@ -275,6 +277,7 @@ export const journey: JourneyEntry[] = [
     title: "Matriculation student",
     organisation: "Kolej Matrikulasi Kedah",
     mark: "KMK",
+    logo: "/logos/kmk.png",
     start: "[START YEAR]",
     end: "[END YEAR]",
     // Optional: add one sentence about your stream, a club or a memory from KMK, right after "under pressure."
