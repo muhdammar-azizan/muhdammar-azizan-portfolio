@@ -28,6 +28,7 @@ export default function Footer() {
       links: [
         { label: email, href: `mailto:${email}` },
         { label: "WhatsApp", href: `https://wa.me/${whatsapp}` },
+        { label: `+${whatsapp.slice(0, 2)} ${whatsapp.slice(2, 4)}-${whatsapp.slice(4, 7)} ${whatsapp.slice(7)}`, href: `tel:+${whatsapp}` },
         ...(siteConfig.resumeUrl ? [{ label: "Resume", href: siteConfig.resumeUrl }] : []),
       ],
     },

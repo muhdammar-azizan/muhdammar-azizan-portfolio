@@ -26,11 +26,11 @@ export const siteConfig = {
   ],
   // Phone number in international format without "+" or spaces, e.g. 60123456789.
   contact: {
-    whatsapp: "60000000000",
-    instagram: "https://www.instagram.com/your-username",
-    linkedin: "https://www.linkedin.com/in/your-username",
+    whatsapp: "60175744235",
+    instagram: "https://www.instagram.com/ammarzizan_",
+    linkedin: "https://www.linkedin.com/in/ammar-azizan",
     github: "https://github.com/muhdammar-azizan",
-    email: "you@example.com",
+    email: "muhdammar.azizan@gmail.com",
   },
   // Put the resume file in /public and set its path here, e.g. "/resume.pdf".
   resumeUrl: null as string | null,
