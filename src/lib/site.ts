@@ -40,6 +40,7 @@ export const navItems = [
   { label: "About", href: "#about" },
   { label: "Projects", href: "#projects" },
   { label: "Journey", href: "#journey" },
+  { label: "Achievements", href: "#achievements" },
   { label: "Skills", href: "#skills" },
   { label: "Contact", href: "#contact" },
 ];
@@ -273,6 +274,82 @@ export const journey: JourneyEntry[] = [
     story:
       "Kolej Matrikulasi Kedah was where my foundation was built. The programme was fast and demanding, and it taught me discipline, time management and how to study consistently under pressure. It prepared me for university and gave me the habits I still rely on today.",
     highlights: ["Discipline", "Time Management", "Strong Foundation"],
+  },
+];
+
+// ---------- Achievements ----------
+
+export type Achievement = {
+  title: string;
+  // Where it happened, for example the competition or programme name.
+  event: string;
+  year: string;
+  // Very short text for the round stamp, 12 characters at most (for example "Champion", "Top 10").
+  result: string;
+  // Colour of the stamp: gold, silver and bronze for places, "merit" for everything else.
+  tier: "gold" | "silver" | "bronze" | "merit";
+  kind: "Competition" | "Award" | "Certificate" | "Programme";
+  // One or two sentences.
+  story: string;
+};
+
+export const achievementsIntro = "A few moments I am proud of: competitions, awards and programmes that pushed me beyond the classroom.";
+
+// TODO: this is dummy data. Replace every entry with the real achievements (add or remove entries freely).
+export const achievements: Achievement[] = [
+  {
+    title: "National Hackathon Champion",
+    event: "Sample National Hackathon",
+    year: "2025",
+    result: "Champion",
+    tier: "gold",
+    kind: "Competition",
+    story: "Led a team of four to build a working prototype in 24 hours and pitched it to a panel of industry judges.",
+  },
+  {
+    title: "Best Innovation Award",
+    event: "Sample University Innovation Expo",
+    year: "2025",
+    result: "Best Idea",
+    tier: "silver",
+    kind: "Award",
+    story: "Recognised for an idea that solves a real problem for students, from the first sketch to a live demo.",
+  },
+  {
+    title: "Dean's List",
+    event: "Faculty of Computing, UMPSA",
+    year: "2024",
+    result: "Dean's List",
+    tier: "merit",
+    kind: "Award",
+    story: "Kept a strong academic result while taking part in competitions and running a company.",
+  },
+  {
+    title: "Data Analytics Programme",
+    event: "Sample Industry Training Programme",
+    year: "2024",
+    result: "Completed",
+    tier: "merit",
+    kind: "Programme",
+    story: "Learned to clean, analyse and present data, and finished with a small dashboard project.",
+  },
+  {
+    title: "Pitching Competition Finalist",
+    event: "Sample Startup Pitch Challenge",
+    year: "2024",
+    result: "Finalist",
+    tier: "bronze",
+    kind: "Competition",
+    story: "Pitched a student-focused product in front of mentors and investors, and learned how to tell the story behind the code.",
+  },
+  {
+    title: "AI Fundamentals Certificate",
+    event: "Sample Online Learning Platform",
+    year: "2023",
+    result: "Certified",
+    tier: "merit",
+    kind: "Certificate",
+    story: "Covered the basics of machine learning and how to use AI tools responsibly in real projects.",
   },
 ];
 
