@@ -39,7 +39,7 @@ export default function ActivityTimeline({ activities }: { activities: Activity[
               aria-hidden="true"
               className="absolute top-7 -left-[33px] h-3 w-3 rounded-full border-2 border-background bg-accent sm:-left-[45px]"
             />
-            <article className="relative grid gap-5 rounded-[3px] bg-[#fdfbf4] p-5 text-[#2a2f3a] shadow-[0_14px_30px_-16px_rgba(40,25,10,0.5)] sm:grid-cols-[minmax(0,1fr)_minmax(0,250px)] sm:gap-8 sm:p-6">
+            <article className="relative grid gap-5 rounded-[3px] bg-[#fdfbf4] p-5 text-[#2a2f3a] shadow-[0_14px_30px_-16px_rgba(40,25,10,0.5)] sm:grid-cols-[minmax(0,1fr)_minmax(0,330px)] sm:gap-8 sm:p-6">
               <span aria-hidden="true" className="paper-grain pointer-events-none absolute inset-0 opacity-30 mix-blend-multiply" />
               {/* Small piece of tape */}
               <span
@@ -74,7 +74,7 @@ function PaperStack({ photos }: { photos: Activity["photos"] }) {
   };
 
   return (
-    <div className="relative w-full max-w-[250px] sm:justify-self-end">
+    <div className="relative w-full max-w-[330px] sm:justify-self-end">
       <div className="relative aspect-[4/3.4] w-full">
         <AnimatePresence initial={false}>
           {sheets.slice(0, VISIBLE).map(({ id, photo }, depth) => {
@@ -108,7 +108,7 @@ function PaperStack({ photos }: { photos: Activity["photos"] }) {
                 <span aria-hidden="true" className="paper-grain pointer-events-none absolute inset-0 rounded-[3px] opacity-25 mix-blend-multiply" />
                 <span className="relative block h-[calc(100%-1.75rem)] overflow-hidden rounded-[2px] bg-[#e6dfcf]">
                   {photo.src ? (
-                    <Image src={photo.src} alt={photo.caption} fill sizes="250px" className="object-cover" />
+                    <Image src={photo.src} alt={photo.caption} fill sizes="330px" className="object-cover" />
                   ) : (
                     <span className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-[#ece5d4] to-[#d8cfb8] text-[#2a2f3a]/45">
                       <ImageIcon aria-hidden="true" className="h-7 w-7" />
