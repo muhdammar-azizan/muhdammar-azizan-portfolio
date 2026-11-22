@@ -1,4 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
+import CurrentYear from "./CurrentYear";
 import Reveal from "./Reveal";
 import SocialLinks from "./SocialLinks";
 import { navItems, siteConfig } from "@/lib/site";
@@ -81,7 +82,7 @@ export default function Footer() {
 
         <div className="mt-14 flex flex-col gap-2 border-t border-background/15 pt-6 text-sm text-background/50 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+            © <CurrentYear /> {siteConfig.name}. All rights reserved.
           </p>
           <p>Designed and built by me with Next.js.</p>
         </div>
