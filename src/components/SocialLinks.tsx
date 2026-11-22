@@ -1,4 +1,3 @@
-import { Mail } from "lucide-react";
 import { siGithub } from "simple-icons";
 import { siteConfig } from "@/lib/site";
 
@@ -32,6 +31,23 @@ const LinkedInIcon = () => (
   </svg>
 );
 
+// The Gmail "M" in five pieces: one plain colour at rest, the official colours on hover.
+const GmailIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5" aria-hidden="true">
+    <path className="group-hover:fill-[#4285F4]" d="M1.636 21H5.455V11.73L0 7.64V19.364C0 20.268.732 21 1.636 21Z" />
+    <path className="group-hover:fill-[#34A853]" d="M18.545 21h3.819C23.268 21 24 20.268 24 19.364V7.64l-5.455 4.09V21Z" />
+    <path
+      className="group-hover:fill-[#FBBC04]"
+      d="M18.545 4.64v7.09L24 7.64V5.457c0-2.023-2.309-3.178-3.927-1.964l-1.528 1.147Z"
+    />
+    <path className="group-hover:fill-[#EA4335]" d="M5.455 11.73V4.64L12 9.548l6.545-4.908v7.09L12 16.64l-6.545-4.91Z" />
+    <path
+      className="group-hover:fill-[#C5221F]"
+      d="M0 5.457V7.64l5.455 4.09V4.64L3.927 3.493C2.309 2.28 0 3.434 0 5.457Z"
+    />
+  </svg>
+);
+
 const GitHubIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5" aria-hidden="true">
     <path d={siGithub.path} />
@@ -51,8 +67,8 @@ const links = [
   {
     label: "Email",
     href: `mailto:${siteConfig.contact.email}`,
-    icon: <Mail className="h-5 w-5" aria-hidden="true" />,
-    brand: "#0f766e",
+    icon: <GmailIcon />,
+    brand: "#EA4335",
   },
 ];
 
