@@ -427,8 +427,8 @@ export const achievements: Achievement[] = [
 export const skills = [
   { group: "Languages", items: ["PHP", "Dart", "JavaScript", "SQL", "Python"] },
   { group: "Frontend and Mobile", items: ["Flutter", "HTML", "CSS"] },
-  { group: "Backend", items: ["Laravel", "REST API Design", "API Integration"] },
-  { group: "Databases", items: ["MySQL", "Firebase Realtime Database"] },
-  { group: "Tools and Platforms", items: ["Git", "GitHub", "Cloudflare", "Firebase"] },
-  { group: "Other", items: ["Distributed Databases", "IoT with ESP32", "SAP Analytics Cloud", "AI Fundamentals"] },
+  { group: "Backend", items: ["Laravel"] },
+  { group: "Databases", items: ["MySQL"] },
+  { group: "Tools and Platforms", items: ["GitHub", "Firebase"] },
+  { group: "Other", items: ["Distributed Databases", "IoT with ESP32", "SAP Analytics Cloud", "Power BI", "AI Fundamentals"] },
 ];

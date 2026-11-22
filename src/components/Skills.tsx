@@ -21,7 +21,20 @@ const isNearBlack = (hex: string) => {
   return ((value >> 16) & 255) + ((value >> 8) & 255) + (value & 255) < 150;
 };
 
+// Power BI is not in the logo library, so its three yellow bars are drawn here.
+function PowerBiIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 shrink-0">
+      <rect x="3" y="12" width="5" height="9" rx="1.2" fill="#E8B500" />
+      <rect x="9.5" y="7" width="5" height="14" rx="1.2" fill="#F2C811" />
+      <rect x="16" y="2" width="5" height="19" rx="1.2" fill="#F2C811" />
+      <rect x="16" y="2" width="5" height="9" rx="1.2" fill="#C99700" opacity="0.55" />
+    </svg>
+  );
+}
+
 function SkillIcon({ name }: { name: string }) {
+  if (keyFor(name) === "powerbi") return <PowerBiIcon />;
   const brand = techIcon(name);
   if (brand) {
     return (
