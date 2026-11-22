@@ -1,156 +1,91 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, LayoutGroup, MotionConfig, motion } from "framer-motion";
+import {
+  AnimatePresence,
+  LayoutGroup,
+  MotionConfig,
+  motion,
+  useMotionValueEvent,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import { ArrowDown } from "lucide-react";
 import ShowcaseFile from "./projects/ShowcaseFile";
 import ProjectPaper from "./projects/ProjectPaper";
 import { shelfItems } from "@/lib/site";
 
 const TOTAL = shelfItems.length;
-// After one step, further wheel events are ignored for this long (ms), so a single flick moves one file only.
-const STEP_LOCK = 750;
-// A touch swipe shorter than this (px) does not change the file.
-const SWIPE = 40;
+// How much page scroll (in screen heights) moves the showcase on by one file.
+const SCREENS_PER_FILE = 1.5;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /**
- * Projects as a pinned showcase. When the section reaches the top of the screen it stays there, and each scroll
- * (wheel step or swipe) brings the next file to the front: the current one leaves to the left and the next one
- * swings in from the right. After the last file, scrolling carries on to the next section.
+ * Projects as a pinned showcase. While the section passes, the stage stays on screen and the files travel across
+ * it with the scroll: each one comes in small and turned from the right, rests large in the middle for a while (that
+ * is where its name shows), then turns away and leaves to the left while the next one is already coming in.
  *
- * The section is as tall as one screen per file, and the file in front always follows the page position, so the
- * scrollbar, the keyboard and the navbar links keep working. A wheel step or swipe only jumps the page straight to
- * the next file's position.
+ * The movement follows the normal page scroll, softened by a spring, so it can stop anywhere and never jumps.
+ * Every file on screen can be clicked to open its paper.
  */
 export default function Projects() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState(0);
-  const currentRef = useRef(0);
   const [opened, setOpened] = useState<number | null>(null);
-  const openedRef = useRef<number | null>(null);
-  // Height of one step (the screen height) and whether the screen is narrow, measured in the browser.
+  // Screen height and whether the screen is narrow, measured in the browser.
   const [screen, setScreen] = useState({ height: 0, narrow: false });
 
   useEffect(() => {
-    openedRef.current = opened;
-  }, [opened]);
-
-  const topOfSection = useCallback(() => {
-    const node = sectionRef.current;
-    return node ? node.getBoundingClientRect().top + window.scrollY : 0;
+    const measure = () => setScreen({ height: window.innerHeight, narrow: window.innerWidth < 640 });
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, []);
 
-  // Jump the page to the spot where file `index` is in front. The stage is pinned, so only the files move.
-  const goTo = useCallback(
-    (index: number) => {
-      const target = Math.max(0, Math.min(TOTAL - 1, index));
-      window.scrollTo({ top: topOfSection() + target * window.innerHeight, behavior: "instant" });
-    },
-    [topOfSection],
-  );
+  // 0 while the first file is in the middle, TOTAL - 1 at the last one. The spring gives the soft, slightly delayed
+  // follow that makes the files glide instead of jumping with every wheel notch.
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
+  const rawProgress = useTransform(scrollYProgress, (v) => v * (TOTAL - 1));
+  const progress = useSpring(rawProgress, { stiffness: 90, damping: 24, mass: 0.6, restDelta: 0.0005 });
 
-  // Screen size, and the file in front from the page position.
-  useEffect(() => {
-    const measure = () => setScreen({ height: window.innerHeight, narrow: window.innerWidth < 640 });
-    const follow = () => {
-      const progress = (window.scrollY - topOfSection()) / window.innerHeight;
-      const index = Math.max(0, Math.min(TOTAL - 1, Math.round(progress)));
-      if (index !== currentRef.current) {
-        currentRef.current = index;
-        setCurrent(index);
-      }
-    };
-    measure();
-    follow();
-    window.addEventListener("resize", measure);
-    window.addEventListener("scroll", follow, { passive: true });
-    return () => {
-      window.removeEventListener("resize", measure);
-      window.removeEventListener("scroll", follow);
-    };
-  }, [topOfSection]);
+  // The file nearest the middle (for the name, the counter and the short peek). Only re-renders when it changes.
+  useMotionValueEvent(progress, "change", (p) => {
+    const index = Math.max(0, Math.min(TOTAL - 1, Math.round(p)));
+    setCurrent((previous) => (previous === index ? previous : index));
+  });
 
-  // One wheel step or one swipe = one file, while the stage is pinned. At the first and last file the page scrolls
-  // on normally, so the visitor can always leave the section.
-  useEffect(() => {
-    let lockedUntil = 0;
-    const pinned = () => {
-      const top = topOfSection();
-      const y = window.scrollY;
-      return y >= top - 4 && y <= top + (TOTAL - 1) * window.innerHeight + 4;
-    };
-    const nextFor = (direction: number) => {
-      const next = currentRef.current + direction;
-      return next >= 0 && next < TOTAL ? next : null;
-    };
-
-    const onWheel = (event: WheelEvent) => {
-      if (openedRef.current !== null || Math.abs(event.deltaY) < 2 || !pinned()) return;
-      const next = nextFor(event.deltaY > 0 ? 1 : -1);
-      if (next === null) return;
-      event.preventDefault();
-      const now = performance.now();
-      // A trackpad keeps sending events after a flick; keep ignoring them until they stop.
-      if (now < lockedUntil) {
-        lockedUntil = Math.max(lockedUntil, now + 160);
-        return;
-      }
-      lockedUntil = now + STEP_LOCK;
-      goTo(next);
-    };
-
-    let startY: number | null = null;
-    const onTouchStart = (event: TouchEvent) => {
-      startY = openedRef.current === null && pinned() ? event.touches[0].clientY : null;
-    };
-    const onTouchMove = (event: TouchEvent) => {
-      if (startY === null) return;
-      const direction = startY - event.touches[0].clientY > 0 ? 1 : -1;
-      // Hold the page still while swiping between files; let it move when the swipe leaves the section.
-      if (nextFor(direction) !== null) event.preventDefault();
-    };
-    const onTouchEnd = (event: TouchEvent) => {
-      if (startY === null) return;
-      const distance = startY - event.changedTouches[0].clientY;
-      startY = null;
-      if (Math.abs(distance) < SWIPE) return;
-      const next = nextFor(distance > 0 ? 1 : -1);
-      if (next !== null) goTo(next);
-    };
-
-    window.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
-    return () => {
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
-    };
-  }, [goTo, topOfSection]);
+  // The name below the files is shown while a file rests in the middle and fades out while files are moving.
+  const nameOpacity = useTransform(progress, (p) => {
+    const away = Math.abs(p - Math.round(p));
+    return away < 0.12 ? 1 : Math.max(0, 1 - (away - 0.12) / 0.2);
+  });
+  const nameY = useTransform(nameOpacity, (o) => (1 - o) * 10);
 
   // Skip: go straight to the section after the projects.
   const skip = () => {
-    const end = topOfSection() + (sectionRef.current?.offsetHeight ?? 0);
+    const node = sectionRef.current;
+    if (!node) return;
+    const end = node.getBoundingClientRect().bottom + window.scrollY;
     window.scrollTo({ top: end, behavior: "smooth" });
   };
 
   const close = useCallback(() => setOpened(null), []);
   const item = shelfItems[current];
   const last = current === TOTAL - 1;
-  // One screen per file. Before the browser has measured, fall back to CSS screen units.
-  const stepHeight = screen.height ? `${screen.height}px` : "100svh";
+  // One screen for the stage, plus the scroll that moves through the files.
+  // Before the browser has measured, fall back to CSS screen units.
+  const screenHeight = screen.height ? `${screen.height}px` : "100svh";
+  const sectionHeight = `calc(${screenHeight} * ${1 + (TOTAL - 1) * SCREENS_PER_FILE})`;
 
   return (
     <MotionConfig reducedMotion="user">
       <section id="projects" className="scroll-mt-0 border-t border-foreground/15">
         <LayoutGroup id="project-files">
-          <div ref={sectionRef} className="relative" style={{ height: `calc(${stepHeight} * ${TOTAL})` }}>
+          <div ref={sectionRef} className="relative" style={{ height: sectionHeight }}>
             {/* The stage stays pinned to the screen while the page scrolls through the section */}
-            <div className="sticky top-0 overflow-hidden" style={{ height: stepHeight }}>
+            <div className="sticky top-0 overflow-hidden" style={{ height: screenHeight }}>
               <div className="relative mx-auto flex h-full max-w-6xl flex-col px-6 pb-5 pt-20 sm:pt-24">
                 <div>
                   <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -158,23 +93,28 @@ export default function Projects() {
                   </h2>
                   <p className="mt-2 text-sm text-foreground/60 sm:text-base">
                     <span className="hidden sm:inline">Hover the file to peek inside, click to open it.</span>
-                    <span className="sm:hidden">Tap the file to open it.</span>
+                    <span className="sm:hidden">Tap a file to open it.</span>
                   </p>
                 </div>
 
                 {/* The files. Their size follows the space left on the screen (container units). */}
                 <div className="relative min-h-0 flex-1" style={{ containerType: "size" }}>
+                  {/* Soft light behind the file in front, like a spotlight on a desk */}
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-1/2 top-1/2 aspect-square w-[min(90vw,780px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--accent)_13%,transparent),transparent)]"
+                  />
                   <div className="absolute inset-0 [--fw:min(62vw,calc(100cqh*0.9/1.32),360px)]">
                     {shelfItems.map((file, index) => (
                       <ShowcaseFile
                         key={file.id}
                         item={file}
                         index={index}
-                        offset={index - current}
+                        progress={progress}
+                        front={index === current}
                         open={opened === index}
                         narrow={screen.narrow}
                         onOpen={setOpened}
-                        onSelect={goTo}
                       />
                     ))}
                   </div>
@@ -182,18 +122,10 @@ export default function Projects() {
 
                 {/* Name and summary of the file in front */}
                 <div className="relative h-[4.75rem] text-center sm:h-[5.25rem]">
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 14 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
-                    >
-                      <h3 className="font-clash text-2xl font-semibold tracking-tight sm:text-4xl">{item.title}</h3>
-                      <p className="mx-auto mt-1 max-w-xl text-sm text-foreground/60 sm:text-base">{item.summary}</p>
-                    </motion.div>
-                  </AnimatePresence>
+                  <motion.div style={{ opacity: nameOpacity, y: nameY }}>
+                    <h3 className="font-clash text-2xl font-semibold tracking-tight sm:text-4xl">{item.title}</h3>
+                    <p className="mx-auto mt-1 max-w-xl text-sm text-foreground/60 sm:text-base">{item.summary}</p>
+                  </motion.div>
                 </div>
 
                 {/* Bottom bar: file counter on the left, scroll hint in the middle, skip on the right */}
@@ -212,7 +144,7 @@ export default function Projects() {
                     </span>
                   </div>
                   <p className="hidden items-center gap-2 font-mono text-xs sm:flex">
-                    {last ? "Scroll to continue" : "Scroll for the next file"}
+                    {last ? "Scroll to continue" : "Scroll to explore the files"}
                     <ArrowDown aria-hidden="true" className="h-4 w-4 animate-bounce motion-reduce:animate-none" />
                   </p>
                   <button
