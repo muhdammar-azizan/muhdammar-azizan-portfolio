@@ -25,7 +25,7 @@ const isNearBlack = (hex: string) => {
 // Power BI is not in the logo library, so its three yellow bars are drawn here.
 function PowerBiIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 shrink-0">
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 shrink-0">
       <rect x="3" y="12" width="5" height="9" rx="1.2" fill="#E8B500" />
       <rect x="9.5" y="7" width="5" height="14" rx="1.2" fill="#F2C811" />
       <rect x="16" y="2" width="5" height="19" rx="1.2" fill="#F2C811" />
@@ -39,13 +39,13 @@ function SkillIcon({ name }: { name: string }) {
   const brand = techIcon(name);
   if (brand) {
     return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 shrink-0" fill={isNearBlack(brand.hex) ? "currentColor" : `#${brand.hex}`}>
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 shrink-0" fill={isNearBlack(brand.hex) ? "currentColor" : `#${brand.hex}`}>
         <path d={brand.path} />
       </svg>
     );
   }
   const Icon = FALLBACK_ICONS[keyFor(name)];
-  if (Icon) return <Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-foreground/55" />;
+  if (Icon) return <Icon aria-hidden="true" className="h-6 w-6 shrink-0 text-foreground/55" />;
   return <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40" />;
 }
 
@@ -58,7 +58,7 @@ function Tile({ name, index }: { name: string; index: number }) {
     <li className="skill-tile group relative shrink-0" style={{ "--tile": TILE_COLORS[index % TILE_COLORS.length] } as React.CSSProperties}>
       {/* The coloured side of the tile: it shows below and to the right when the tile lifts */}
       <span aria-hidden="true" className="skill-tile-side" />
-      <span className="skill-tile-face flex h-[76px] items-center justify-center gap-3 border border-foreground bg-background px-7 text-[15px] font-medium whitespace-nowrap text-foreground">
+      <span className="skill-tile-face flex h-[96px] items-center justify-center gap-4 border border-foreground bg-background px-9 text-[17px] font-medium whitespace-nowrap text-foreground">
         <SkillIcon name={name} />
         {name}
       </span>
@@ -96,7 +96,7 @@ export default function Skills() {
   return (
     // The section is as wide as the screen, so the rows run edge to edge on any monitor.
     // Only the heading is kept inside the usual page width.
-    <section id="skills" className="scroll-mt-16 overflow-x-clip py-24">
+    <section id="skills" className="scroll-mt-16 overflow-x-clip pt-24 pb-6">
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
           <h2 className="mb-10 text-3xl font-bold tracking-tight sm:text-4xl">
