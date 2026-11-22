@@ -1,4 +1,8 @@
-import { Braces, Database, Network, Plug, Sparkles, type LucideIcon } from "lucide-react";
+"use client";
+
+import { useRef } from "react";
+import { useInView } from "framer-motion";
+import { Database, Network, Sparkles, type LucideIcon } from "lucide-react";
 import Section from "./Section";
 import Reveal from "./Reveal";
 import { skills } from "@/lib/site";
@@ -7,8 +11,6 @@ import { techIcon } from "@/lib/tech";
 // Skills that have no brand logo get a small plain icon instead, so every chip looks the same.
 const FALLBACK_ICONS: Record<string, LucideIcon> = {
   sql: Database,
-  restapidesign: Braces,
-  apiintegration: Plug,
   distributeddatabases: Network,
   aifundamentals: Sparkles,
 };
@@ -24,7 +26,7 @@ const isNearBlack = (hex: string) => {
 // Power BI is not in the logo library, so its three yellow bars are drawn here.
 function PowerBiIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 shrink-0">
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 shrink-0">
       <rect x="3" y="12" width="5" height="9" rx="1.2" fill="#E8B500" />
       <rect x="9.5" y="7" width="5" height="14" rx="1.2" fill="#F2C811" />
       <rect x="16" y="2" width="5" height="19" rx="1.2" fill="#F2C811" />
@@ -38,41 +40,68 @@ function SkillIcon({ name }: { name: string }) {
   const brand = techIcon(name);
   if (brand) {
     return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 shrink-0" fill={isNearBlack(brand.hex) ? "currentColor" : `#${brand.hex}`}>
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 shrink-0" fill={isNearBlack(brand.hex) ? "currentColor" : `#${brand.hex}`}>
         <path d={brand.path} />
       </svg>
     );
   }
   const Icon = FALLBACK_ICONS[keyFor(name)];
-  if (Icon) return <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-foreground/55" />;
+  if (Icon) return <Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-foreground/55" />;
   return <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40" />;
 }
 
-/**
- * Skills in one small panel: six short groups, each skill a chip with its logo.
- * Everything is visible at once; nothing is hidden behind a click.
- */
-export default function Skills() {
+// Hover colours, used one after another so neighbouring tiles differ.
+const TILE_COLORS = ["#c8f23a", "#8f4cf0", "#b9a7ec"];
+
+// Each row shows its tiles twice in a row (and the track holds two such sets), so the loop never shows a gap.
+function Tile({ name, index }: { name: string; index: number }) {
   return (
-    <Section id="skills" title="Skills">
-      <div className="grid gap-x-12 gap-y-6 rounded-2xl border border-foreground/10 bg-foreground/[0.03] p-5 sm:gap-y-8 sm:p-8 md:grid-cols-2">
-        {skills.map((group, index) => (
-          <Reveal key={group.group} delay={index * 0.07}>
-            <h3 className="mb-3 font-hand text-lg font-bold text-foreground/60">{group.group}</h3>
-            <ul className="flex flex-wrap gap-2">
-              {group.items.map((item) => (
-                <li
-                  key={item}
-                  className="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-background px-3.5 py-1.5 text-sm font-medium text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-foreground/35 hover:shadow-md"
-                >
-                  <SkillIcon name={item} />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
+    <li className="skill-tile group relative shrink-0" style={{ "--tile": TILE_COLORS[index % TILE_COLORS.length] } as React.CSSProperties}>
+      {/* The coloured side of the tile: it shows below and to the right when the tile lifts */}
+      <span aria-hidden="true" className="skill-tile-side" />
+      <span className="skill-tile-face flex h-[76px] items-center justify-center gap-3 border border-foreground/15 bg-background px-7 text-[15px] font-medium whitespace-nowrap text-foreground">
+        <SkillIcon name={name} />
+        {name}
+      </span>
+    </li>
+  );
+}
+
+function Row({ items, direction, live }: { items: string[]; direction: "right" | "left"; live: boolean }) {
+  const repeated = [...items, ...items];
+  return (
+    <div className="marquee overflow-x-clip py-3" data-live={live} data-direction={direction}>
+      <div className="marquee-track">
+        {[0, 1].map((copy) => (
+          <ul key={copy} aria-hidden={copy === 1} className="flex shrink-0 gap-4 pr-4">
+            {repeated.map((name, index) => (
+              <Tile key={`${name}-${index}`} name={name} index={index} />
+            ))}
+          </ul>
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Skills as two rows of tiles that slide in opposite directions: the top row moves left to right,
+ * the bottom row right to left. Hovering a tile pauses its row and lifts the tile.
+ */
+export default function Skills() {
+  const ref = useRef<HTMLDivElement>(null);
+  // The rows only move while they are on screen, so they cost nothing the rest of the time.
+  const live = useInView(ref, { margin: "100px 0px 100px 0px" });
+  const middle = Math.ceil(skills.length / 2);
+
+  return (
+    <Section id="skills" title="Skills">
+      <Reveal>
+        <div ref={ref} className="skill-rows -mx-6 flex flex-col gap-2">
+          <Row items={skills.slice(0, middle)} direction="right" live={live} />
+          <Row items={skills.slice(middle)} direction="left" live={live} />
+        </div>
+      </Reveal>
     </Section>
   );
 }

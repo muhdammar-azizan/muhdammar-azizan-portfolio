@@ -422,13 +422,24 @@ export const achievements: Achievement[] = [
 
 // ---------- Skills ----------
 
-// Kept short on purpose: six groups, shown together in one small panel.
+// One flat list, shown as two rows of tiles that slide in opposite directions.
 // A skill gets a coloured logo when src/lib/tech.ts knows it, or a small icon from the Skills component otherwise.
 export const skills = [
-  { group: "Languages", items: ["PHP", "Dart", "JavaScript", "SQL", "Python"] },
-  { group: "Frontend and Mobile", items: ["Flutter", "HTML", "CSS"] },
-  { group: "Backend", items: ["Laravel"] },
-  { group: "Databases", items: ["MySQL"] },
-  { group: "Tools and Platforms", items: ["GitHub", "Firebase"] },
-  { group: "Other", items: ["Distributed Databases", "IoT with ESP32", "SAP Analytics Cloud", "Power BI", "AI Fundamentals"] },
+  "PHP",
+  "Flutter",
+  "Laravel",
+  "MySQL",
+  "Dart",
+  "HTML",
+  "CSS",
+  "JavaScript",
+  "SQL",
+  "Python",
+  "Firebase",
+  "GitHub",
+  "Distributed Databases",
+  "IoT with ESP32",
+  "SAP Analytics Cloud",
+  "Power BI",
+  "AI Fundamentals",
 ];
