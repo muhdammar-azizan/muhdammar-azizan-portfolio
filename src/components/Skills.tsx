@@ -69,7 +69,7 @@ function Tile({ name, index }: { name: string; index: number }) {
 function Row({ items, direction, live }: { items: string[]; direction: "right" | "left"; live: boolean }) {
   const repeated = [...items, ...items, ...items];
   return (
-    <div className="marquee overflow-x-clip py-3" data-live={live} data-direction={direction}>
+    <div className="marquee overflow-x-clip py-4 [&+&]:border-t [&+&]:border-foreground/15" data-live={live} data-direction={direction}>
       <div className="marquee-track">
         {[0, 1].map((copy) => (
           <ul key={copy} aria-hidden={copy === 1} className="flex shrink-0 gap-4 pr-4">
@@ -106,7 +106,7 @@ export default function Skills() {
       </div>
 
       <Reveal>
-        <div ref={ref} className="skill-rows flex flex-col gap-2">
+        <div ref={ref} className="skill-rows flex flex-col border-t border-foreground/15">
           <Row items={skills.slice(0, middle)} direction="right" live={live} />
           <Row items={skills.slice(middle)} direction="left" live={live} />
         </div>
