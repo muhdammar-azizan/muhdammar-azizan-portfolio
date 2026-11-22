@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { ArrowUpRight, ChevronLeft, ChevronRight, CodeXml, Mail, X } from "lucide-react";
 import { siteConfig, type ProjectPage, type ShelfItem } from "@/lib/site";
-import { paperLayoutId } from "./ProjectFolder";
+import { paperLayoutId } from "./ShowcaseFile";
 import SketchLogo from "./SketchLogo";
 
 const EASE = [0.32, 0.72, 0, 1] as const;

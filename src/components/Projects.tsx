@@ -1,264 +1,234 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  AnimatePresence,
-  LayoutGroup,
-  MotionConfig,
-  animate,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  type PanInfo,
-} from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import Reveal from "./Reveal";
-import ProjectFolder from "./projects/ProjectFolder";
+import { AnimatePresence, LayoutGroup, MotionConfig, motion } from "framer-motion";
+import { ArrowDown } from "lucide-react";
+import ShowcaseFile from "./projects/ShowcaseFile";
 import ProjectPaper from "./projects/ProjectPaper";
-import { SHELF_SIZE, shelfItems } from "@/lib/site";
+import { shelfItems } from "@/lib/site";
 
-// True while the shelf is on screen. It turns on when a good part of the shelf is visible and only turns off
-// once the shelf has left the screen completely, so scrolling near the edge does not replay the entrance.
-function useShelfEntered(ref: React.RefObject<HTMLElement | null>) {
-  const [entered, setEntered] = useState(false);
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.intersectionRatio >= 0.35) setEntered(true);
-        else if (!entry.isIntersecting) setEntered(false);
-      },
-      { threshold: [0, 0.35] },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [ref]);
-  return entered;
-}
+const TOTAL = shelfItems.length;
+// After one step, further wheel events are ignored for this long (ms), so a single flick moves one file only.
+const STEP_LOCK = 750;
+// A touch swipe shorter than this (px) does not change the file.
+const SWIPE = 40;
 
-const SLIDE_SPRING = { type: "spring", stiffness: 140, damping: 24, mass: 0.9 } as const;
+const pad = (n: number) => String(n).padStart(2, "0");
 
 /**
- * Projects shown as a row of manila files that slides left and right.
- * Hover (or first tap on phones) peeks inside a file; clicking opens its paper in the middle.
- * Empty spots hold "Reserved for you" files with contact details.
+ * Projects as a pinned showcase. When the section reaches the top of the screen it stays there, and each scroll
+ * (wheel step or swipe) brings the next file to the front: the current one leaves to the left and the next one
+ * swings in from the right. After the last file, scrolling carries on to the next section.
+ *
+ * The section is as tall as one screen per file, and the file in front always follows the page position, so the
+ * scrollbar, the keyboard and the navbar links keep working. A wheel step or swipe only jumps the page straight to
+ * the next file's position.
  */
 export default function Projects() {
-  // Which file the pointer is on (-1 for none). A motion value rather than state: hovering would otherwise
-  // re-render the whole shelf. Each file listens to it for itself.
-  const peeked = useMotionValue(-1);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [current, setCurrent] = useState(0);
+  const currentRef = useRef(0);
   const [opened, setOpened] = useState<number | null>(null);
   const openedRef = useRef<number | null>(null);
-  const folderButtons = useRef<(HTMLButtonElement | null)[]>([]);
-  const reduceMotion = useReducedMotion();
-  const shelfRef = useRef<HTMLDivElement>(null);
-  const entered = useShelfEntered(shelfRef);
+  // Height of one step (the screen height) and whether the screen is narrow, measured in the browser.
+  const [screen, setScreen] = useState({ height: 0, narrow: false });
 
   useEffect(() => {
     openedRef.current = opened;
   }, [opened]);
 
-  // ---------- Sliding shelf ----------
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const trackX = useMotionValue(0);
-  // Width of the visible window; the files use it to work out which ones are near the edge.
-  const viewWidth = useMotionValue(0);
-  const [metrics, setMetrics] = useState({ step: 1, maxShift: 0, visible: 1 });
-  const [start, setStart] = useState(0);
-  // Set while the shelf is being dragged, so letting go does not also open a file.
-  const dragged = useRef(false);
+  const topOfSection = useCallback(() => {
+    const node = sectionRef.current;
+    return node ? node.getBoundingClientRect().top + window.scrollY : 0;
+  }, []);
 
-  // Measure how far apart the files are and how far the shelf can slide.
+  // Jump the page to the spot where file `index` is in front. The stage is pinned, so only the files move.
+  const goTo = useCallback(
+    (index: number) => {
+      const target = Math.max(0, Math.min(TOTAL - 1, index));
+      window.scrollTo({ top: topOfSection() + target * window.innerHeight, behavior: "instant" });
+    },
+    [topOfSection],
+  );
+
+  // Screen size, and the file in front from the page position.
   useEffect(() => {
-    const measure = () => {
-      const viewport = viewportRef.current;
-      const track = trackRef.current;
-      const slots = track?.querySelectorAll<HTMLElement>("[data-shelf-slot]");
-      if (!viewport || !track || !slots?.length) return;
-      const first = slots[0];
-      const step = slots[1] ? slots[1].offsetLeft - first.offsetLeft : first.offsetWidth;
-      const maxShift = Math.max(0, track.scrollWidth - viewport.clientWidth);
-      const visible = Math.max(1, Math.floor((viewport.clientWidth - first.offsetLeft) / step));
-      viewWidth.set(viewport.clientWidth);
-      setMetrics({ step, maxShift, visible });
+    const measure = () => setScreen({ height: window.innerHeight, narrow: window.innerWidth < 640 });
+    const follow = () => {
+      const progress = (window.scrollY - topOfSection()) / window.innerHeight;
+      const index = Math.max(0, Math.min(TOTAL - 1, Math.round(progress)));
+      if (index !== currentRef.current) {
+        currentRef.current = index;
+        setCurrent(index);
+      }
     };
     measure();
-    const observer = new ResizeObserver(measure);
-    if (viewportRef.current) observer.observe(viewportRef.current);
-    return () => observer.disconnect();
-  }, [viewWidth]);
+    follow();
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", follow, { passive: true });
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", follow);
+    };
+  }, [topOfSection]);
 
-  const maxStart = Math.ceil(metrics.maxShift / metrics.step);
-  const clampStart = useCallback((value: number) => Math.min(Math.max(value, 0), maxStart), [maxStart]);
-  const offsetFor = useCallback(
-    (index: number) => -Math.min(index * metrics.step, metrics.maxShift),
-    [metrics.step, metrics.maxShift],
-  );
-
-  // Glide the shelf whenever the first visible file changes (or the layout is measured again).
+  // One wheel step or one swipe = one file, while the stage is pinned. At the first and last file the page scrolls
+  // on normally, so the visitor can always leave the section.
   useEffect(() => {
-    const controls = animate(trackX, offsetFor(clampStart(start)), reduceMotion ? { duration: 0 } : SLIDE_SPRING);
-    return () => controls.stop();
-  }, [start, clampStart, offsetFor, trackX, reduceMotion]);
+    let lockedUntil = 0;
+    const pinned = () => {
+      const top = topOfSection();
+      const y = window.scrollY;
+      return y >= top - 4 && y <= top + (TOTAL - 1) * window.innerHeight + 4;
+    };
+    const nextFor = (direction: number) => {
+      const next = currentRef.current + direction;
+      return next >= 0 && next < TOTAL ? next : null;
+    };
 
-  const slide = (direction: number) => {
-    peeked.set(-1);
-    setStart((current) => clampStart(current + direction * Math.max(1, metrics.visible - 1)));
-  };
-
-  const onDragEnd = (_: unknown, info: PanInfo) => {
-    // Snap to the nearest file, carrying a little of the throw.
-    const projected = -(trackX.get() + info.velocity.x * 0.2);
-    const next = clampStart(Math.round(projected / metrics.step));
-    setStart(next);
-    // If the start index did not change, the effect above will not run, so glide back here too.
-    animate(trackX, offsetFor(next), reduceMotion ? { duration: 0 } : SLIDE_SPRING);
-    window.setTimeout(() => (dragged.current = false), 50);
-  };
-
-  // Keyboard users tabbing to a hidden file bring it into view.
-  const ensureVisible = (index: number) => {
-    if (index < start) setStart(clampStart(index));
-    else if (index >= start + metrics.visible) setStart(clampStart(index - metrics.visible + 1));
-  };
-
-  // ---------- Peek and open ----------
-  // These handlers are handed to every file and never change, so the files do not re-render for them.
-  const ensureVisibleRef = useRef(ensureVisible);
-  useEffect(() => {
-    ensureVisibleRef.current = ensureVisible;
-  });
-  const onFocusFile = useCallback((index: number) => ensureVisibleRef.current(index), []);
-  const registerButton = useCallback((index: number, el: HTMLButtonElement | null) => {
-    folderButtons.current[index] = el;
-  }, []);
-  const onPeekStart = useCallback(
-    (index: number) => {
-      if (openedRef.current === null && !dragged.current) peeked.set(index);
-    },
-    [peeked],
-  );
-  const onPeekEnd = useCallback(
-    (index: number) => {
-      // Letting go is delayed by one frame. Moving straight from one file to the next would otherwise pass through
-      // "no file" for an instant, which sends all the other files lighter and darker again for no reason.
-      requestAnimationFrame(() => {
-        if (peeked.get() === index) peeked.set(-1);
-      });
-    },
-    [peeked],
-  );
-  const activate = useCallback(
-    (index: number, pointerType: string) => {
-      if (dragged.current) return;
-      // On touch screens the first tap only peeks, the second tap opens.
-      if (pointerType === "touch" && peeked.get() !== index) {
-        peeked.set(index);
+    const onWheel = (event: WheelEvent) => {
+      if (openedRef.current !== null || Math.abs(event.deltaY) < 2 || !pinned()) return;
+      const next = nextFor(event.deltaY > 0 ? 1 : -1);
+      if (next === null) return;
+      event.preventDefault();
+      const now = performance.now();
+      // A trackpad keeps sending events after a flick; keep ignoring them until they stop.
+      if (now < lockedUntil) {
+        lockedUntil = Math.max(lockedUntil, now + 160);
         return;
       }
-      peeked.set(-1);
-      setOpened(index);
-    },
-    [peeked],
-  );
+      lockedUntil = now + STEP_LOCK;
+      goTo(next);
+    };
 
-  const close = () => {
-    const index = opened;
-    setOpened(null);
-    // Give keyboard focus back to the file that was opened.
-    if (index !== null) requestAnimationFrame(() => folderButtons.current[index]?.focus({ preventScroll: true }));
+    let startY: number | null = null;
+    const onTouchStart = (event: TouchEvent) => {
+      startY = openedRef.current === null && pinned() ? event.touches[0].clientY : null;
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      if (startY === null) return;
+      const direction = startY - event.touches[0].clientY > 0 ? 1 : -1;
+      // Hold the page still while swiping between files; let it move when the swipe leaves the section.
+      if (nextFor(direction) !== null) event.preventDefault();
+    };
+    const onTouchEnd = (event: TouchEvent) => {
+      if (startY === null) return;
+      const distance = startY - event.changedTouches[0].clientY;
+      startY = null;
+      if (Math.abs(distance) < SWIPE) return;
+      const next = nextFor(distance > 0 ? 1 : -1);
+      if (next !== null) goTo(next);
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [goTo, topOfSection]);
+
+  // Skip: go straight to the section after the projects.
+  const skip = () => {
+    const end = topOfSection() + (sectionRef.current?.offsetHeight ?? 0);
+    window.scrollTo({ top: end, behavior: "smooth" });
   };
 
-  const atStart = start <= 0;
-  const atEnd = start >= maxStart;
-  // Counter follows where the shelf actually stops (the last slide can be shorter than a full step).
-  const firstShown = Math.min(Math.round(-offsetFor(clampStart(start)) / metrics.step) + 1, SHELF_SIZE);
-  const lastShown = Math.min(firstShown + metrics.visible - 1, SHELF_SIZE);
+  const close = useCallback(() => setOpened(null), []);
+  const item = shelfItems[current];
+  const last = current === TOTAL - 1;
+  // One screen per file. Before the browser has measured, fall back to CSS screen units.
+  const stepHeight = screen.height ? `${screen.height}px` : "100svh";
 
   return (
     <MotionConfig reducedMotion="user">
-      {/* Straight line along the top; the ruler closes the section at the bottom */}
-      <section id="projects" className="scroll-mt-16 overflow-x-clip border-t border-foreground/15 pt-24">
-        <div className="mx-auto max-w-6xl px-6">
-          <Reveal>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Project Files<span className="text-accent">.</span>
-            </h2>
-            <p className="mt-3 text-foreground/60">
-              <span className="hidden sm:inline">Hover a file to peek inside, click to open it. Slide the shelf for more.</span>
-              <span className="sm:hidden">Tap a file to peek inside, tap again to open it. Swipe for more.</span>
-            </p>
-          </Reveal>
-        </div>
-
+      <section id="projects" className="scroll-mt-0 border-t border-foreground/15">
         <LayoutGroup id="project-files">
-          {/* No fade-in for the whole shelf: each file makes its own entrance instead */}
-          <div ref={shelfRef}>
-            <div className="relative">
-              {/* Visible window of the shelf. Clips sideways only, so peeking papers can rise above it. */}
-              <div ref={viewportRef} className="overflow-x-clip pb-8 pt-20">
-                <motion.div
-                  ref={trackRef}
-                  className="flex w-max cursor-grab items-end active:cursor-grabbing [--fw:min(44vw,190px)] [--overlap:-0.1] sm:[--fw:clamp(180px,19vw,250px)] sm:[--overlap:-0.2]"
-                  // Line the first file up with the page content; leave the same room after the last one.
-                  style={{
-                    x: trackX,
-                    touchAction: "pan-y",
-                    paddingLeft: "max(1.5rem, calc((100vw - 72rem) / 2 + 1.5rem))",
-                    paddingRight: "max(1.5rem, calc((100vw - 72rem) / 2 + 1.5rem))",
-                    // The whole shelf moves as one layer, so sliding does not repaint the files.
-                    willChange: "transform",
-                  }}
-                  drag={opened === null ? "x" : false}
-                  dragConstraints={{ left: -metrics.maxShift, right: 0 }}
-                  dragElastic={0.12}
-                  dragMomentum={false}
-                  onDragStart={() => {
-                    dragged.current = true;
-                    peeked.set(-1);
-                  }}
-                  onDragEnd={onDragEnd}
-                >
-                  <Bookend side="start" />
-                  {shelfItems.map((item, index) => (
-                    <ProjectFolder
-                      key={item.id}
-                      item={item}
-                      index={index}
-                      total={shelfItems.length}
-                      peeked={peeked}
-                      opened={opened}
-                      trackX={trackX}
-                      viewWidth={viewWidth}
-                      registerButton={registerButton}
-                      onPeekStart={onPeekStart}
-                      onPeekEnd={onPeekEnd}
-                      onActivate={activate}
-                      onFocusFile={onFocusFile}
-                      entered={entered}
-                    />
-                  ))}
-                  <Bookend side="end" />
-                </motion.div>
-              </div>
+          <div ref={sectionRef} className="relative" style={{ height: `calc(${stepHeight} * ${TOTAL})` }}>
+            {/* The stage stays pinned to the screen while the page scrolls through the section */}
+            <div className="sticky top-0 overflow-hidden" style={{ height: stepHeight }}>
+              <div className="relative mx-auto flex h-full max-w-6xl flex-col px-6 pb-5 pt-20 sm:pt-24">
+                <div>
+                  <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    Project Files<span className="text-accent">.</span>
+                  </h2>
+                  <p className="mt-2 text-sm text-foreground/60 sm:text-base">
+                    <span className="hidden sm:inline">Hover the file to peek inside, click to open it.</span>
+                    <span className="sm:hidden">Tap the file to open it.</span>
+                  </p>
+                </div>
 
-              {/* Slide buttons */}
-              <ShelfArrow side="left" disabled={atStart} onClick={() => slide(-1)} />
-              <ShelfArrow side="right" disabled={atEnd} onClick={() => slide(1)} />
+                {/* The files. Their size follows the space left on the screen (container units). */}
+                <div className="relative min-h-0 flex-1" style={{ containerType: "size" }}>
+                  <div className="absolute inset-0 [--fw:min(62vw,calc(100cqh*0.9/1.32),360px)]">
+                    {shelfItems.map((file, index) => (
+                      <ShowcaseFile
+                        key={file.id}
+                        item={file}
+                        index={index}
+                        offset={index - current}
+                        open={opened === index}
+                        narrow={screen.narrow}
+                        onOpen={setOpened}
+                        onSelect={goTo}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Name and summary of the file in front */}
+                <div className="relative h-[4.75rem] text-center sm:h-[5.25rem]">
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    >
+                      <h3 className="font-clash text-2xl font-semibold tracking-tight sm:text-4xl">{item.title}</h3>
+                      <p className="mx-auto mt-1 max-w-xl text-sm text-foreground/60 sm:text-base">{item.summary}</p>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Bottom bar: file counter on the left, scroll hint in the middle, skip on the right */}
+                <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm text-foreground/60">
+                  <div className="flex items-center gap-3 font-mono" aria-live="polite">
+                    <span className="text-foreground">{pad(current + 1)}</span>
+                    <span aria-hidden="true" className="relative h-px w-12 bg-foreground/20 sm:w-20">
+                      <span
+                        className="absolute inset-y-0 left-0 bg-foreground transition-[width] duration-500"
+                        style={{ width: `${((current + 1) / TOTAL) * 100}%` }}
+                      />
+                    </span>
+                    <span>{pad(TOTAL)}</span>
+                    <span className="sr-only">
+                      File {current + 1} of {TOTAL}
+                    </span>
+                  </div>
+                  <p className="hidden items-center gap-2 font-mono text-xs sm:flex">
+                    {last ? "Scroll to continue" : "Scroll for the next file"}
+                    <ArrowDown aria-hidden="true" className="h-4 w-4 animate-bounce motion-reduce:animate-none" />
+                  </p>
+                  <button
+                    type="button"
+                    onClick={skip}
+                    className="justify-self-end rounded-full border border-foreground/20 px-3.5 py-1.5 text-xs font-medium transition hover:border-foreground/50 hover:text-foreground sm:text-sm"
+                  >
+                    Skip projects
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Handwritten counter of the files in view */}
-          <p className="mt-2 text-center font-hand text-lg text-foreground/60" aria-live="polite">
-            {String(firstShown).padStart(2, "0")}–{String(lastShown).padStart(2, "0")} / {SHELF_SIZE}
-          </p>
-
           <AnimatePresence>
-            {opened !== null && (
-              <ProjectPaper key={shelfItems[opened].id} project={shelfItems[opened]} onClose={close} />
-            )}
+            {opened !== null && <ProjectPaper key={shelfItems[opened].id} project={shelfItems[opened]} onClose={close} />}
           </AnimatePresence>
         </LayoutGroup>
 
@@ -266,41 +236,6 @@ export default function Projects() {
         <Ruler />
       </section>
     </MotionConfig>
-  );
-}
-
-// Round glass button on the side of the shelf.
-function ShelfArrow({ side, disabled, onClick }: { side: "left" | "right"; disabled: boolean; onClick: () => void }) {
-  const Icon = side === "left" ? ChevronLeft : ChevronRight;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={side === "left" ? "Show previous files" : "Show next files"}
-      className={`nav-glass absolute top-[55%] z-30 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-foreground transition hover:scale-105 disabled:pointer-events-none disabled:opacity-0 ${
-        side === "left" ? "left-3 sm:left-6" : "right-3 sm:right-6"
-      }`}
-    >
-      <Icon className="h-5 w-5" />
-    </button>
-  );
-}
-
-// L-shaped metal bookend that holds the row of files at each end of the shelf.
-function Bookend({ side }: { side: "start" | "end" }) {
-  const start = side === "start";
-  return (
-    <div
-      aria-hidden="true"
-      className={`relative shrink-0 self-end ${start ? "mr-2" : "ml-2"}`}
-      style={{ width: "calc(var(--fw) * 0.24)", height: "calc(var(--fw) * 0.75)", zIndex: start ? 40 : 0 }}
-    >
-      {/* Upright plate, leaning on the files */}
-      <span className={`metal-plate absolute bottom-0 top-0 block w-[18%] rounded-t-[3px] ${start ? "right-0" : "left-0"}`} />
-      {/* Base plate that slides under the files */}
-      <span className={`metal-plate absolute -bottom-px block h-[5%] rounded-[1px] ${start ? "left-0 right-0" : "left-0 -right-0"}`} />
-    </div>
   );
 }
 

@@ -168,10 +168,10 @@ export const projects: Project[] = [
 
 // ---------- Project shelf ----------
 
-// Total number of files on the projects shelf. Spots without a project become
-// "Reserved for you" files that invite visitors to get in touch.
-// To show a new project, add it to `projects` above; one reserved file disappears automatically.
-export const SHELF_SIZE = 10;
+// The projects showcase shows every project, then one "Reserved for you" file that invites visitors to get in touch.
+// To show a new project, add it to `projects` above.
+const RESERVED_FILES = 1;
+export const SHELF_SIZE = projects.length + RESERVED_FILES;
 
 // Everything the shelf needs to draw one file and open its paper.
 export type ShelfItem = {
