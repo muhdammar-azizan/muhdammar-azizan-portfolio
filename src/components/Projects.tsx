@@ -17,6 +17,26 @@ import ProjectFolder from "./projects/ProjectFolder";
 import ProjectPaper from "./projects/ProjectPaper";
 import { SHELF_SIZE, shelfItems } from "@/lib/site";
 
+// True while the shelf is on screen. It turns on when a good part of the shelf is visible and only turns off
+// once the shelf has left the screen completely, so scrolling near the edge does not replay the entrance.
+function useShelfEntered(ref: React.RefObject<HTMLElement | null>) {
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.intersectionRatio >= 0.35) setEntered(true);
+        else if (!entry.isIntersecting) setEntered(false);
+      },
+      { threshold: [0, 0.35] },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [ref]);
+  return entered;
+}
+
 const SLIDE_SPRING = { type: "spring", stiffness: 140, damping: 24, mass: 0.9 } as const;
 
 /**
@@ -32,6 +52,8 @@ export default function Projects() {
   const openedRef = useRef<number | null>(null);
   const folderButtons = useRef<(HTMLButtonElement | null)[]>([]);
   const reduceMotion = useReducedMotion();
+  const shelfRef = useRef<HTMLDivElement>(null);
+  const entered = useShelfEntered(shelfRef);
 
   useEffect(() => {
     openedRef.current = opened;
@@ -173,7 +195,7 @@ export default function Projects() {
 
         <LayoutGroup id="project-files">
           {/* No fade-in for the whole shelf: each file makes its own entrance instead */}
-          <div>
+          <div ref={shelfRef}>
             <div className="relative">
               {/* Visible window of the shelf. Clips sideways only, so peeking papers can rise above it. */}
               <div ref={viewportRef} className="overflow-x-clip pb-8 pt-20">
@@ -215,6 +237,7 @@ export default function Projects() {
                       onPeekEnd={onPeekEnd}
                       onActivate={activate}
                       onFocusFile={onFocusFile}
+                      entered={entered}
                     />
                   ))}
                   <Bookend side="end" />

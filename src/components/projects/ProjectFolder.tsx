@@ -31,10 +31,11 @@ const EDGE_DIM = 0.3; // how much darker at the very edge
 const DIM = 0.28; // how much darker the other files get while one is peeked
 const BRIGHTEN = 0.08; // how much lighter the peeked file gets
 
-// Entrance of the files: time between one file and the next, and how many files take part in the staggering.
-// Files further along start together with the fifth one, so files that slide into view later do not wait long.
-const ENTER_STAGGER = 0.07;
-const ENTER_STAGGER_MAX = 4;
+// Entrance of the files: each one sweeps in from the right, turned away in 3D, and settles into its place.
+// They come one after another from the left; files far along the shelf share the last start time.
+const ENTER_STAGGER = 0.12;
+const ENTER_STAGGER_MAX = 7;
+const ENTER_DURATION = 0.85;
 
 // One easing for everything that moves by CSS transition: quick start, long soft landing, like the springs before.
 const SETTLE = "cubic-bezier(0.22, 1, 0.36, 1)";
@@ -62,6 +63,8 @@ type ProjectFolderProps = {
   onPeekEnd: (index: number) => void;
   onActivate: (index: number, pointerType: string) => void;
   onFocusFile: (index: number) => void;
+  // True while the shelf is on screen: the files are in their places. False: waiting off to the right.
+  entered: boolean;
 };
 
 /**
@@ -82,6 +85,7 @@ function ProjectFolder({
   onPeekEnd,
   onActivate,
   onFocusFile,
+  entered,
 }: ProjectFolderProps) {
   const open = opened === index;
   // -1 moves left, 1 moves right, 0 stays (while another file is open, the rest make room).
@@ -194,15 +198,24 @@ function ProjectFolder({
         willChange: "transform",
       }}
     >
-      {/* Entrance: the file starts turned away, like a file in a drawer that has not been flipped to yet, and swings
-          upright. Files that are on screen do it one after another from the left. Once only. */}
+      {/* Entrance: the file waits off to the right, turned away. When the shelf comes into view it sweeps left
+          into its place and turns to face front, one file after another. Leaving the shelf resets it, so it
+          plays again the next time. */}
       <motion.div
         className="absolute inset-0"
         style={{ transformPerspective: 900, originX: 0 }}
-        initial={{ opacity: 0, rotateY: -75, y: 24 }}
-        whileInView={{ opacity: 1, rotateY: 0, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.5, delay: Math.min(index, ENTER_STAGGER_MAX) * ENTER_STAGGER, ease: [0.22, 1, 0.36, 1] }}
+        initial={false}
+        animate={entered ? { opacity: 1, x: 0, rotateY: 0, rotateZ: 0 } : { opacity: 0, x: "55vw", rotateY: -55, rotateZ: 5 }}
+        transition={
+          entered
+            ? {
+                duration: ENTER_DURATION,
+                delay: Math.min(index, ENTER_STAGGER_MAX) * ENTER_STAGGER,
+                ease: [0.22, 1, 0.36, 1],
+                opacity: { duration: 0.3, delay: Math.min(index, ENTER_STAGGER_MAX) * ENTER_STAGGER },
+              }
+            : { duration: 0 }
+        }
       >
       <motion.div
         className="absolute inset-0"
