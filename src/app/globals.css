@@ -211,7 +211,7 @@ html.theme-switching *::after {
 .skill-tile-face {
   position: relative;
   z-index: 1;
-  transition: transform 0.2s ease-out, border-color 0.2s ease-out;
+  transition: transform 0.2s ease-out;
 }
 
 .skill-tile-side {
@@ -232,7 +232,6 @@ html.theme-switching *::after {
 
 .skill-tile:hover .skill-tile-face {
   transform: translate(calc(var(--lift) * -1), calc(var(--lift) * -1));
-  border-color: var(--tile);
 }
 
 .skill-tile:hover .skill-tile-side { opacity: 1; }
@@ -420,3 +419,4 @@ html[data-cursor="on"] :is(input, textarea, select, [contenteditable="true"]) {
     transition: none;
   }
 }
+
