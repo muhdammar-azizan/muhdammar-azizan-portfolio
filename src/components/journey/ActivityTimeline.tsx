@@ -25,36 +25,57 @@ export default function ActivityTimeline({ activities }: { activities: Activity[
       <p className="mb-5 font-hand text-xl font-bold text-foreground/70">What I did there</p>
 
       <ol className="ml-3 flex flex-col gap-9 border-l-2 border-dashed border-foreground/25 pl-6 sm:ml-5 sm:pl-9">
-        {activities.map((activity, index) => (
-          <motion.li
-            key={activity.title}
-            className="relative"
-            initial={{ opacity: 0, y: 44, rotate: PAPER_TILTS[index % PAPER_TILTS.length] * 3 }}
-            whileInView={{ opacity: 1, y: 0, rotate: PAPER_TILTS[index % PAPER_TILTS.length] }}
-            viewport={{ once: true, margin: "0px 0px -80px 0px" }}
-            transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
-          >
-            {/* Dot on the dashed line */}
-            <span
-              aria-hidden="true"
-              className="absolute top-7 -left-[33px] h-3 w-3 rounded-full border-2 border-background bg-accent sm:-left-[45px]"
-            />
-            <article className="relative grid gap-5 rounded-[3px] bg-[#fdfbf4] p-5 text-[#2a2f3a] shadow-[0_14px_30px_-16px_rgba(40,25,10,0.5)] sm:grid-cols-[minmax(0,1fr)_minmax(0,330px)] sm:gap-8 sm:p-6">
-              <span aria-hidden="true" className="paper-grain pointer-events-none absolute inset-0 opacity-30 mix-blend-multiply" />
-              {/* Small piece of tape */}
+        {activities.map((activity, index) => {
+          // Photos sit on the right for the first activity, then on the left, and so on.
+          const flipped = index % 2 === 1;
+          return (
+            <motion.li
+              key={activity.title}
+              className="relative"
+              // The paper unfolds from its left edge to the right, like a folded sheet being opened.
+              style={{ transformPerspective: 1100, originX: 0 }}
+              initial={{ opacity: 0, rotateY: -88, rotate: PAPER_TILTS[index % PAPER_TILTS.length] }}
+              whileInView={{ opacity: 1, rotateY: 0, rotate: PAPER_TILTS[index % PAPER_TILTS.length] }}
+              viewport={{ once: true, margin: "0px 0px -80px 0px" }}
+              transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
+            >
+              {/* Dot on the dashed line */}
               <span
                 aria-hidden="true"
-                className={`absolute -top-2.5 h-5 w-16 bg-[#f3ecd2]/85 shadow-sm ${index % 2 ? "left-6 rotate-[4deg]" : "left-8 -rotate-3"}`}
+                className="absolute top-7 -left-[33px] h-3 w-3 rounded-full border-2 border-background bg-accent sm:-left-[45px]"
               />
-              <div className="relative">
-                <p className="font-hand text-base font-bold text-[#0f6b64]">{activity.date}</p>
-                <h4 className="mt-0.5 font-clash text-lg font-semibold leading-snug text-[#1f2a44]">{activity.title}</h4>
-                <p className="mt-1.5 text-[15px] leading-relaxed text-[#2a2f3a]/80">{activity.detail}</p>
-              </div>
-              <PaperStack photos={activity.photos} />
-            </article>
-          </motion.li>
-        ))}
+              <article
+                className={`relative grid gap-5 rounded-[3px] bg-[#fdfbf4] p-5 text-[#2a2f3a] shadow-[0_14px_30px_-16px_rgba(40,25,10,0.5)] sm:gap-8 sm:p-6 ${
+                  flipped ? "sm:grid-cols-[minmax(0,330px)_minmax(0,1fr)]" : "sm:grid-cols-[minmax(0,1fr)_minmax(0,330px)]"
+                }`}
+              >
+                <span aria-hidden="true" className="paper-grain pointer-events-none absolute inset-0 opacity-30 mix-blend-multiply" />
+                {/* Light creases, so the sheet looks lightly crumpled */}
+                <span aria-hidden="true" className="paper-creases pointer-events-none absolute inset-0 rounded-[3px]" />
+                {/* Shade on the folds that fades while the paper opens */}
+                <motion.span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 rounded-[3px] bg-gradient-to-r from-black/30 via-black/10 to-transparent"
+                  initial={{ opacity: 1 }}
+                  whileInView={{ opacity: 0 }}
+                  viewport={{ once: true, margin: "0px 0px -80px 0px" }}
+                  transition={{ duration: 0.9, ease: "easeOut" }}
+                />
+                {/* Small piece of tape */}
+                <span
+                  aria-hidden="true"
+                  className={`absolute -top-2.5 h-5 w-16 bg-[#f3ecd2]/85 shadow-sm ${index % 2 ? "left-6 rotate-[4deg]" : "left-8 -rotate-3"}`}
+                />
+                <div className="relative">
+                  <p className="font-hand text-base font-bold text-[#0f6b64]">{activity.date}</p>
+                  <h4 className="mt-0.5 font-clash text-lg font-semibold leading-snug text-[#1f2a44]">{activity.title}</h4>
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-[#2a2f3a]/80">{activity.detail}</p>
+                </div>
+                <PaperStack photos={activity.photos} flipped={flipped} />
+              </article>
+            </motion.li>
+          );
+        })}
       </ol>
     </div>
   );
@@ -62,7 +83,7 @@ export default function ActivityTimeline({ activities }: { activities: Activity[
 
 type Sheet = { id: number; photo: Activity["photos"][number] };
 
-function PaperStack({ photos }: { photos: Activity["photos"] }) {
+function PaperStack({ photos, flipped }: { photos: Activity["photos"]; flipped: boolean }) {
   // The stack is a queue: the front sheet is pulled out and a copy goes to the back, so it never runs out.
   const nextId = useRef(photos.length);
   const [sheets, setSheets] = useState<Sheet[]>(() => photos.map((photo, id) => ({ id, photo })));
@@ -74,7 +95,7 @@ function PaperStack({ photos }: { photos: Activity["photos"] }) {
   };
 
   return (
-    <div className="relative w-full max-w-[330px] sm:justify-self-end">
+    <div className={`relative w-full max-w-[330px] ${flipped ? "sm:order-first sm:justify-self-start" : "sm:justify-self-end"}`}>
       <div className="relative aspect-[4/3.4] w-full">
         <AnimatePresence initial={false}>
           {sheets.slice(0, VISIBLE).map(({ id, photo }, depth) => {

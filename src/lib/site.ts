@@ -304,6 +304,21 @@ export const journey: JourneyEntry[] = [
     story:
       "At UMPSA I moved from learning programming basics to building complete systems: databases, web and mobile applications, and the integration between them. University is also where I stepped outside the classroom. I joined national and university level competitions, pitched ideas to judges, worked with mentors, and picked up industry skills through programmes in data analytics and artificial intelligence. Those experiences taught me that good software is only half the job, and that explaining it clearly to people is the other half. I have also kept a strong academic record while doing all of this.",
     highlights: ["Full Stack Development", "Competitions and Pitching", "Data and AI Learning"],
+    // TODO: dummy activities. Replace with the real ones.
+    activities: [
+      {
+        date: "[MONTH YEAR]",
+        title: "Hackathon weekend",
+        detail: "Built and pitched a working prototype with a small team in one weekend.",
+        photos: [{ caption: "Team photo" }, { caption: "Pitching" }, { caption: "Prize giving" }],
+      },
+      {
+        date: "[MONTH YEAR]",
+        title: "Data analytics workshop",
+        detail: "Learned to clean and present data, and finished with a small dashboard.",
+        photos: [{ caption: "Workshop" }, { caption: "Group work" }],
+      },
+    ],
   },
   {
     kind: "education",
@@ -317,6 +332,15 @@ export const journey: JourneyEntry[] = [
     story:
       "Kolej Matrikulasi Kedah was where my foundation was built. The programme was fast and demanding, and it taught me discipline, time management and how to study consistently under pressure. It prepared me for university and gave me the habits I still rely on today.",
     highlights: ["Discipline", "Time Management", "Strong Foundation"],
+    // TODO: dummy activities. Replace with the real ones.
+    activities: [
+      {
+        date: "[MONTH YEAR]",
+        title: "College programme or club",
+        detail: "A short note about something you took part in at the college.",
+        photos: [{ caption: "With friends" }, { caption: "On the day" }],
+      },
+    ],
   },
 ];
 
