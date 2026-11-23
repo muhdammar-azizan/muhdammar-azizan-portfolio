@@ -11,7 +11,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useMotionValue, useReducedMotion } from "framer-motion";
-import { siFlutter, siGithub, siLaravel, siNextdotjs, type SimpleIcon } from "simple-icons";
+import { siFirebase, siFlutter, siGithub, siLaravel, siNextdotjs, type SimpleIcon } from "simple-icons";
 import { siteConfig } from "@/lib/site";
 
 // ---------- What hangs where ----------
@@ -38,6 +38,7 @@ const KEYCHAINS: KeychainData[] = [
   { id: "github", icon: siGithub, x: 36, xSmall: 50, chain: 1.5, scale: 0.9, phase: 2.1, href: siteConfig.contact.github },
   { id: "nextjs", icon: siNextdotjs, x: 48, xSmall: null, chain: 0.45, scale: 0.85, phase: 3.7 },
   { id: "flutter", icon: siFlutter, x: 93, xSmall: 88, chain: 1.1, scale: 1.05, phase: 5.2 },
+  { id: "firebase", icon: siFirebase, x: 7, xSmall: null, chain: 1.25, scale: 0.9, phase: 1.3 },
 ];
 
 // ---------- Drawing ----------
