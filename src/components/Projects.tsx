@@ -10,6 +10,7 @@ import {
   useScroll,
   useSpring,
   useTransform,
+  useVelocity,
 } from "framer-motion";
 import { ArrowDown } from "lucide-react";
 import ShowcaseFile from "./projects/ShowcaseFile";
@@ -49,6 +50,13 @@ export default function Projects() {
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
   const rawProgress = useTransform(scrollYProgress, (v) => v * (TOTAL - 1));
   const progress = useSpring(rawProgress, { stiffness: 90, damping: 24, mass: 0.6, restDelta: 0.0005 });
+
+  // How fast the files are travelling (files per second), turned into a soft -1..1 bend for the paper effect.
+  const speed = useVelocity(progress);
+  const bend = useSpring(
+    useTransform(speed, (v) => Math.max(-1, Math.min(1, v * 0.9))),
+    { stiffness: 120, damping: 18, mass: 0.6 },
+  );
 
   // The file nearest the middle (for the name, the counter and the short peek). Only re-renders when it changes.
   useMotionValueEvent(progress, "change", (p) => {
@@ -104,13 +112,14 @@ export default function Projects() {
                     aria-hidden="true"
                     className="pointer-events-none absolute left-1/2 top-1/2 aspect-square w-[min(90vw,780px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--accent)_13%,transparent),transparent)]"
                   />
-                  <div className="absolute inset-0 [--fw:min(62vw,calc(100cqh*0.9/1.32),360px)]">
+                  <div className="absolute inset-0 [--fw:min(74vw,calc(100cqh*0.98/1.32),470px)]">
                     {shelfItems.map((file, index) => (
                       <ShowcaseFile
                         key={file.id}
                         item={file}
                         index={index}
                         progress={progress}
+                        bend={bend}
                         front={index === current}
                         open={opened === index}
                         narrow={screen.narrow}
