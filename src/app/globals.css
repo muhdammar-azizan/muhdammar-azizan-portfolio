@@ -249,13 +249,13 @@ html.theme-switching *::after {
   --color-accent: #0f766e;
 }
 
-/* Dark theme: the footer stays light, the opposite of the dark page. */
+/* Dark theme: the footer is a soft, muted grey, the opposite of the dark page but not glaring. */
 :root[data-theme="dark"] .footer-invert {
-  --foreground: #e8ecf5;
-  --background: #161616;
+  --foreground: #9aa1b2;
+  --background: #101010;
   --accent: #0f766e;
-  --color-foreground: #e8ecf5;
-  --color-background: #161616;
+  --color-foreground: #9aa1b2;
+  --color-background: #101010;
   --color-accent: #0f766e;
 }
 

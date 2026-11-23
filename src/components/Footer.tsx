@@ -36,7 +36,7 @@ export default function Footer() {
 
   return (
     <footer id="contact" className="footer-invert scroll-mt-0 bg-foreground text-background">
-      <div className="mx-auto max-w-6xl px-6 pt-20 pb-10">
+      <div className="mx-auto max-w-6xl px-6 pt-20 pb-14">
         <Reveal>
           <p className="font-hand text-xl text-background/60">Have a project in mind, or an opening on your team?</p>
           <h2 className="mt-3 max-w-3xl font-clash text-5xl leading-[1.05] font-semibold tracking-tight sm:text-6xl lg:text-7xl">
@@ -81,7 +81,11 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-14 flex flex-col gap-2 border-t border-background/15 pt-6 text-sm text-background/50 sm:flex-row sm:items-center sm:justify-between">
+      </div>
+
+      {/* The bottom line runs edge to edge, so it sits outside the centred container */}
+      <div className="border-t border-background/15">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-6 text-sm text-background/50 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © <CurrentYear /> {siteConfig.name}. All rights reserved.
           </p>
