@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { ImageIcon } from "lucide-react";
 import type { Activity } from "@/lib/site";
 
@@ -13,6 +13,9 @@ const PAPER_TILTS = [-0.6, 0.5, -0.4];
 const PEEK = 7;
 // Only this many sheets are drawn at once; the rest wait underneath.
 const VISIBLE = 3;
+// A paper only starts to open once its top is above this line (30% up from the bottom of the screen),
+// so they come in one by one as you scroll, not all together.
+const TRIGGER = { once: true, margin: "0px 0px -30% 0px" } as const;
 
 /**
  * Short list of activities under a journey card. Every activity is its own paper and appears
@@ -20,11 +23,22 @@ const VISIBLE = 3;
  * a stack of photos held by a paper clip on the right.
  */
 export default function ActivityTimeline({ activities }: { activities: Activity[] }) {
+  const listRef = useRef<HTMLOListElement>(null);
+  // The dashed line is drawn downwards as the list scrolls past, so the next activity always has a line leading to it.
+  const { scrollYProgress } = useScroll({ target: listRef, offset: ["start 75%", "end 75%"] });
+  const drawn = useSpring(scrollYProgress, { stiffness: 120, damping: 28, mass: 0.4 });
+  const lineClip = useTransform(drawn, (v) => `inset(0 0 ${(1 - Math.min(Math.max(v, 0), 1)) * 100}% 0)`);
+
   return (
     <div>
       <p className="mb-5 font-hand text-xl font-bold text-foreground/70">What I did there</p>
 
-      <ol className="ml-3 flex flex-col gap-9 border-l-2 border-dashed border-foreground/25 pl-6 sm:ml-5 sm:pl-9">
+      <ol ref={listRef} className="relative ml-3 flex flex-col gap-9 pl-6 sm:ml-5 sm:pl-9">
+        <motion.span
+          aria-hidden="true"
+          className="absolute inset-y-0 left-0 border-l-2 border-dashed border-foreground/25"
+          style={{ clipPath: lineClip }}
+        />
         {activities.map((activity, index) => {
           // Photos sit on the right for the first activity, then on the left, and so on.
           const flipped = index % 2 === 1;
@@ -34,9 +48,9 @@ export default function ActivityTimeline({ activities }: { activities: Activity[
               className="relative"
               // The paper unfolds from its left edge to the right, like a folded sheet being opened.
               style={{ transformPerspective: 1100, originX: 0 }}
-              initial={{ opacity: 0, rotateY: -88, rotate: PAPER_TILTS[index % PAPER_TILTS.length] }}
-              whileInView={{ opacity: 1, rotateY: 0, rotate: PAPER_TILTS[index % PAPER_TILTS.length] }}
-              viewport={{ once: true, margin: "0px 0px -80px 0px" }}
+              initial={{ opacity: 0, y: 48, rotateY: -88, rotate: PAPER_TILTS[index % PAPER_TILTS.length] }}
+              whileInView={{ opacity: 1, y: 0, rotateY: 0, rotate: PAPER_TILTS[index % PAPER_TILTS.length] }}
+              viewport={TRIGGER}
               transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
             >
               {/* Dot on the dashed line */}
@@ -58,7 +72,7 @@ export default function ActivityTimeline({ activities }: { activities: Activity[
                   className="pointer-events-none absolute inset-0 rounded-[3px] bg-gradient-to-r from-black/30 via-black/10 to-transparent"
                   initial={{ opacity: 1 }}
                   whileInView={{ opacity: 0 }}
-                  viewport={{ once: true, margin: "0px 0px -80px 0px" }}
+                  viewport={TRIGGER}
                   transition={{ duration: 0.9, ease: "easeOut" }}
                 />
                 {/* Small piece of tape */}
