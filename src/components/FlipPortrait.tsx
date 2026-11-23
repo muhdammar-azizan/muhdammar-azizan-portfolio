@@ -11,6 +11,7 @@ import {
   useSpring,
 } from "framer-motion";
 import { Sparkles } from "lucide-react";
+import { toggleProfileFlip, useProfileFlipped } from "@/lib/profileFlip";
 
 const NEON = "#DBFF00";
 const SPARK_COLORS = [NEON, "#A3E635", "#FACC15", "#FFFFFF"];
@@ -33,7 +34,8 @@ type FlipPortraitProps = {
  * The memoji shows first; clicking reveals the real photo with a glare sweep and a spark burst.
  */
 export default function FlipPortrait({ memoji, photo, name, width, height }: FlipPortraitProps) {
-  const [flipped, setFlipped] = useState(false);
+  // Shared with the small avatar in the navbar, so both flip together.
+  const flipped = useProfileFlipped();
   const [flipCount, setFlipCount] = useState(0);
   const [sparks, setSparks] = useState<Spark[]>([]);
   const reduceMotion = useReducedMotion();
@@ -61,7 +63,7 @@ export default function FlipPortrait({ memoji, photo, name, width, height }: Fli
   };
 
   const handleClick = () => {
-    setFlipped((value) => !value);
+    toggleProfileFlip();
     setFlipCount((count) => count + 1);
     if (reduceMotion) return;
 

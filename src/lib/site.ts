@@ -36,6 +36,10 @@ export const siteConfig = {
   resumeUrl: null as string | null,
 };
 
+// Helpers that turn the raw contact details above into text for display.
+export const formatPhone = (digits: string) => `+${digits.slice(0, 2)} ${digits.slice(2, 4)}-${digits.slice(4, 7)} ${digits.slice(7)}`;
+export const shortUrl = (url: string) => url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+
 export const navItems = [
   { label: "About", href: "#about" },
   { label: "Projects", href: "#projects" },

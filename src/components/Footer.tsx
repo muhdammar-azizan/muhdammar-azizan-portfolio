@@ -2,7 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import CurrentYear from "./CurrentYear";
 import Reveal from "./Reveal";
 import SocialLinks from "./SocialLinks";
-import { navItems, siteConfig } from "@/lib/site";
+import { formatPhone, navItems, siteConfig } from "@/lib/site";
 
 /**
  * The last part of the page, and the place to get in touch (the "Contact" link in the navbar
@@ -28,7 +28,7 @@ export default function Footer() {
       links: [
         { label: email, href: `mailto:${email}` },
         { label: "WhatsApp", href: `https://wa.me/${whatsapp}` },
-        { label: `+${whatsapp.slice(0, 2)} ${whatsapp.slice(2, 4)}-${whatsapp.slice(4, 7)} ${whatsapp.slice(7)}`, href: `tel:+${whatsapp}` },
+        { label: formatPhone(whatsapp), href: `tel:+${whatsapp}` },
         ...(siteConfig.resumeUrl ? [{ label: "Resume", href: siteConfig.resumeUrl }] : []),
       ],
     },

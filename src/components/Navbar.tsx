@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { navItems, siteConfig } from "@/lib/site";
+import ProfileMenu from "./ProfileMenu";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
@@ -50,16 +51,8 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           <ThemeToggle />
 
-          {/* Resume button only appears once resumeUrl is set in site.ts */}
-          {siteConfig.resumeUrl && (
-            <a
-              href={siteConfig.resumeUrl}
-              download
-              className="hidden rounded-full border border-accent px-4 py-1.5 text-sm text-accent transition hover:bg-accent hover:text-accent-contrast md:block"
-            >
-              Resume
-            </a>
-          )}
+          {/* Round profile picture: flips with the hero portrait, opens contact details and the résumé */}
+          <ProfileMenu />
 
           {/* Mobile menu button */}
           <button
