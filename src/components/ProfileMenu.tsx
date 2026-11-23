@@ -15,7 +15,7 @@ const PHOTO_FACE = "/images/avatar-photo-face.webp";
 type Row = { label: string; value: string; href: string; brand: string; icon: ReactNode; external?: boolean };
 
 /**
- * Small round profile picture at the right end of the navbar. It flips between the memoji and the real photo
+ * Small square profile picture at the right end of the navbar. It flips between the memoji and the real photo
  * together with the portrait in the hero. Clicking it opens a menu with every way to get in touch,
  * and a link to download the résumé.
  */
@@ -76,7 +76,7 @@ export default function ProfileMenu() {
         aria-expanded={open}
         aria-controls="profile-menu"
         onClick={() => setOpen((value) => !value)}
-        className="relative block h-10 w-10 cursor-pointer rounded-full outline-none ring-2 ring-foreground/15 transition hover:ring-accent focus-visible:ring-accent aria-expanded:ring-accent"
+        className="relative block h-12 w-12 cursor-pointer rounded-lg outline-none ring-2 ring-foreground/15 transition hover:ring-accent focus-visible:ring-accent aria-expanded:ring-accent"
         style={{ perspective: 400 }}
       >
         {/* The two faces turn together with the portrait in the hero */}
@@ -157,14 +157,14 @@ export default function ProfileMenu() {
   );
 }
 
-// One side of the round avatar. The back side is pre-rotated so it faces forward after the flip.
+// One side of the square avatar. The back side is pre-rotated so it faces forward after the flip.
 function Face({ src, alt, back }: { src: string; alt: string; back?: boolean }) {
   return (
     <span
-      className="absolute inset-0 block overflow-hidden rounded-full bg-foreground/10"
+      className="absolute inset-0 block overflow-hidden rounded-lg bg-foreground/10"
       style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: back ? "rotateY(180deg)" : undefined }}
     >
-      <Image src={src} alt={alt} width={64} height={64} className="h-full w-full object-cover" />
+      <Image src={src} alt={alt} width={96} height={96} className="h-full w-full object-cover" />
     </span>
   );
 }
