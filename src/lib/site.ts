@@ -32,8 +32,10 @@ export const siteConfig = {
     github: "https://github.com/muhdammar-azizan",
     email: "muhdammar.azizan@gmail.com",
   },
-  // Put the resume file in /public and set its path here, e.g. "/resume.pdf".
-  resumeUrl: null as string | null,
+  // The résumé PDF in /public, and one picture per page (shown in the preview before anyone downloads).
+  // When the PDF changes, export its pages again to /public/resume/page-N.webp.
+  resumeUrl: "/resume.pdf" as string | null,
+  resumePages: ["/resume/page-1.webp", "/resume/page-2.webp"],
 };
 
 // Helpers that turn the raw contact details above into text for display.

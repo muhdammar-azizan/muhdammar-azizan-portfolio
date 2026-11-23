@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { FileDown, Phone } from "lucide-react";
+import ResumePreview from "./ResumePreview";
 import { GitHubIcon, GmailIcon, InstagramIcon, LinkedInIcon, WhatsAppIcon } from "./SocialLinks";
 import { useProfileFlipped } from "@/lib/profileFlip";
 import { formatPhone, shortUrl, siteConfig } from "@/lib/site";
@@ -21,6 +22,7 @@ type Row = { label: string; value: string; href: string; brand: string; icon: Re
  */
 export default function ProfileMenu() {
   const [open, setOpen] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const flipped = useProfileFlipped();
   const reduceMotion = useReducedMotion();
@@ -133,15 +135,18 @@ export default function ProfileMenu() {
             <div aria-hidden="true" className="mx-3 my-2 h-px bg-foreground/15" />
 
             {siteConfig.resumeUrl ? (
-              <a
-                href={siteConfig.resumeUrl}
-                download
-                className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-accent transition-colors hover:bg-accent/10 focus-visible:bg-accent/10 focus-visible:outline-none"
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setPreviewing(true);
+                }}
+                className="group flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-accent transition-colors hover:bg-accent/10 focus-visible:bg-accent/10 focus-visible:outline-none"
               >
                 <FileDown aria-hidden="true" className="h-5 w-5 shrink-0" />
-                <span className="text-sm font-semibold">Download Résumé</span>
+                <span className="text-sm font-semibold">View Résumé</span>
                 <span className="ml-auto text-xs text-accent/70">PDF</span>
-              </a>
+              </button>
             ) : (
               // The file is not added yet (siteConfig.resumeUrl is null), so this row is shown but not clickable.
               <p className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-foreground/45">
@@ -153,6 +158,8 @@ export default function ProfileMenu() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>{previewing && <ResumePreview onClose={() => setPreviewing(false)} />}</AnimatePresence>
     </div>
   );
 }
